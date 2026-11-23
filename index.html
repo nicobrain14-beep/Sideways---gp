@@ -640,6 +640,7 @@ tr.me td{color:var(--flag);font-weight:700}
 </div>
 
 <script src="/vendor/three-r128.min.js"></script>
+<script src="/vendor/gltf-loader-r128.js"></script>
 <script src="/vendor/peerjs-1.5.5.min.js"></script>
 <script src="/config.js"></script>
 <script>
@@ -1268,6 +1269,7 @@ function wheelGeos(){ if(!wheelGeo){ const ty=new THREE.CylinderGeometry(.36,.36
     const sp=[0,1,2].map(i=>{ const q=new THREE.BoxGeometry(.335,.46,.075); q.rotateX(i*Math.PI/3); return q; });
     const rm=new THREE.CylinderGeometry(.25,.25,.325,14); rm.rotateZ(Math.PI/2); wheelGeo=[mergeGeos([ty].concat(sp)),mergeGeos([rm])]; } return wheelGeo; }
 function buildCarMesh(spec, night, noBeam, look){
+  if(MODELS.ready[spec.id]) return carFromModel(spec,night,noBeam,look||{c1:spec.color,c2:spec.accent,skin:''},MODELS.ready[spec.id]);      // a model made in Blender, when there is one
   const s=spec.shape, L=s.len, Wd=s.wid, X=f=>-L/2+f*L, base=.2;
   const g=new THREE.Group(), body=new THREE.Group(); g.add(body);
   const std=(c,m,r)=>new THREE.MeshStandardMaterial({color:c,metalness:m,roughness:r});
@@ -1317,6 +1319,68 @@ function buildCarMesh(spec, night, noBeam, look){
     bm.rotation.x=-Math.PI/2; bm.rotation.z=Math.PI; bm.position.set(0,.05,L/2+7.4); g.add(bm); }
   return {group:g, body, wheels, flames, shield, ram, tailM, night, rearZ:X(.19), halfW:Wd/2-.13, col:lookCol(lk), len:L};
 }
+
+/* ---- car models made in Blender ----
+   models/models.json lists the cars that have one: {"cars":{"p911":"cars/p911.glb"}}, or with options
+   {"cars":{"p911":{"file":"cars/p911.glb","turn":180,"scale":1}}}. A car without a model, or whose model fails to load,
+   keeps the car built in code. Names given in Blender tell the game what each part is:
+     material "Paint" (or "Body")              takes the car's paint colour and its shop skin
+     material "Accent" (or "Detail", "Stripe") takes the detail colour
+     material "Glass" (or "Window")            dark tinted glass
+     material "Headlight" / "Taillight"        lights that glow (taillights also light up when braking)
+     objects named "Wheel..." (Wheel_FL, Wheel_FR, Wheel_RL, Wheel_RR) spin, and the front pair steers
+   The model is turned to point down the road, scaled to the car's length and set on the ground by itself. */
+const MODELS={list:{},ready:{},busy:{}};
+function modelsInit(){ if(!THREE.GLTFLoader) return;
+  fetch('models/models.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(j=>{ const c=j&&typeof j==='object'&&j.cars&&typeof j.cars==='object'?j.cars:{};
+    for(const id in c){ if(!CARS.some(x=>x.id===id)) continue; const v=typeof c[id]==='string'?{file:c[id]}:c[id]; if(v&&typeof v.file==='string'&&/^[\w\-./]+\.glb$/i.test(v.file)&&!v.file.includes('..')) MODELS.list[id]=v; }
+    for(const id in MODELS.list) loadCarModel(id); }).catch(()=>{}); }
+function loadCarModel(id){ const m=MODELS.list[id]; if(!m||id in MODELS.ready||MODELS.busy[id]) return; MODELS.busy[id]=1;
+  new THREE.GLTFLoader().load('models/'+m.file, gl=>{ MODELS.busy[id]=0; try{ MODELS.ready[id]=prepModel(gl.scene,id,m); }catch(e){ console.warn('Model for '+id+' could not be used:',e); MODELS.ready[id]=null; }
+      if(G.state==='menu'&&CARS[sel.car].id===id) setShowCar(sel.car); },
+    undefined, e=>{ MODELS.busy[id]=0; MODELS.ready[id]=null; console.warn('Model for '+id+' did not load:',m.file); }); }
+const roleOf = (mat,name) => { const t=((mat&&mat.name)||'').toLowerCase(), o=(name||'').toLowerCase(), q=t||o;
+  return /paint|body/.test(q)?'paint':/accent|detail|stripe/.test(q)?'accent':/glass|window/.test(q)?'glass':/tail|brake|rear.?light/.test(q)?'tail':/head|lamp|light/.test(q)?'head':'keep'; };
+function prepModel(root,id,m){ const spec=CARS.find(c=>c.id===id);
+  root.rotation.y=(+m.turn||0)*Math.PI/180; root.updateMatrixWorld(true);
+  let box=new THREE.Box3().setFromObject(root), sz=box.getSize(new THREE.Vector3());
+  if(sz.x>sz.z*1.15){ root.rotation.y+=Math.PI/2; root.updateMatrixWorld(true); box.setFromObject(root); sz=box.getSize(new THREE.Vector3()); }      // modelled side-on: turn it to point down the road
+  if(!(sz.z>0)) throw new Error('empty model');
+  const L=spec.shape.len*clamp(+m.scale||1,.5,2), k=L/sz.z, ctr=box.getCenter(new THREE.Vector3());
+  const toCar=new THREE.Matrix4().makeScale(k,k,k).multiply(new THREE.Matrix4().makeTranslation(-ctr.x,-box.min.y,-ctr.z)), Wd=sz.x*k, H=sz.y*k;
+  const bake=mesh=>{ const g=mesh.geometry.clone(); g.applyMatrix4(new THREE.Matrix4().multiplyMatrices(toCar,mesh.matrixWorld)); if(!g.attributes.normal) g.computeVertexNormals(); return g; };
+  const wheelRoots=[]; root.traverse(o=>{ if(/wheel/i.test(o.name)&&!wheelRoots.some(w=>{ let p=o.parent; while(p){ if(p===w) return true; p=p.parent; } return false; })) wheelRoots.push(o); });
+  const inWheel=o=>{ let p=o; while(p){ if(wheelRoots.includes(p)) return true; p=p.parent; } return false; };
+  // textures come out as painted in Blender: this game's colours are not converted on the way to the screen, so neither are the model's
+  root.traverse(o=>{ if(!o.isMesh) return; for(const mt of (Array.isArray(o.material)?o.material:[o.material])) for(const k of ['map','emissiveMap']) if(mt&&mt[k]){ mt[k].encoding=THREE.LinearEncoding; mt[k].needsUpdate=true; } if(o.material) o.material.envMapIntensity=1.2; });
+  const parts=[], wheels=[];
+  root.traverse(o=>{ if(!o.isMesh||inWheel(o)) return; const mats=Array.isArray(o.material)?o.material:[o.material], role=roleOf(mats[0],o.name), geo=bake(o);
+    const p={geo,role,mat:mats[0]}; if(role==='paint'){ const ns=geo.index?geo.toNonIndexed():geo.clone(); skinUV(ns,L,Wd); p.geoSkin=ns; } parts.push(p); });
+  for(const w of wheelRoots){ const meshes=[]; w.traverse(o=>{ if(o.isMesh) meshes.push(o); }); if(!meshes.length) continue;
+    const geos=meshes.map(o=>({geo:bake(o),role:roleOf(Array.isArray(o.material)?o.material[0]:o.material,o.name),mat:Array.isArray(o.material)?o.material[0]:o.material}));
+    const wb=new THREE.Box3(); geos.forEach(q=>{ q.geo.computeBoundingBox(); wb.union(q.geo.boundingBox); }); const c=wb.getCenter(new THREE.Vector3());
+    geos.forEach(q=>q.geo.translate(-c.x,-c.y,-c.z)); wheels.push({center:c,front:c.z>0,parts:geos,r:(wb.max.y-wb.min.y)/2}); }
+  return {parts,wheels,L,Wd,H}; }
+function carFromModel(spec,night,noBeam,lk,tpl){ const {L,Wd,H}=tpl, base=.2, g=new THREE.Group(), body=new THREE.Group(); g.add(body);
+  const paint=paintMat(lk), acc=new THREE.MeshStandardMaterial({color:lk.c2,metalness:.4,roughness:.38}), glass=new THREE.MeshStandardMaterial({color:0x05080d,metalness:.92,roughness:.05});
+  glass.envMapIntensity=1.4; const headM=new THREE.MeshBasicMaterial({color:night?0xfff3c4:0xe8e2c8,fog:false}), tailM=new THREE.MeshBasicMaterial({color:0x8a1420,fog:false});
+  const matFor=p=>p.role==='paint'?paint:p.role==='accent'?acc:p.role==='glass'?glass:p.role==='tail'?tailM:p.role==='head'?headM:p.mat;
+  let tails=0;
+  for(const p of tpl.parts){ const mesh=new THREE.Mesh(p.role==='paint'&&paint.map?p.geoSkin:p.geo,matFor(p)); if(p.role==='tail'||p.role==='head'){ glowOn(mesh); if(p.role==='tail') tails++; } else mesh.castShadow=true; body.add(mesh); }
+  if(!tails){ const t=glowOn(new THREE.Mesh(new THREE.BoxGeometry(Wd*.7,.08,.06),tailM)); t.position.set(0,H*.5,-L/2-.03); body.add(t); }      // a model without taillights still shows when it brakes
+  const wheels=tpl.wheels.map(w=>{ const pv=new THREE.Group(), wh=new THREE.Group(); pv.position.copy(w.center); w.parts.forEach(p=>{ const mesh=new THREE.Mesh(p.geo,matFor(p)); mesh.castShadow=true; wh.add(mesh); }); pv.add(wh); g.add(pv); return {pv,wh,front:w.front}; });
+  const flM=new THREE.MeshBasicMaterial({color:0x66d8ff, transparent:true, opacity:.65, blending:THREE.AdditiveBlending, depthWrite:false, fog:false});
+  const flG=new THREE.ConeGeometry(.17,1.5,8); flG.translate(0,.75,0); flG.rotateX(-Math.PI/2);
+  const flames=[-1,1].map(sd=>{ const f=glowOn(new THREE.Mesh(flG,flM)); f.position.set(sd*.3,base+.16,-L/2-.12); f.visible=false; body.add(f); return f; });
+  const shield=glowOn(new THREE.Mesh(new THREE.SphereGeometry(1,18,12), new THREE.MeshBasicMaterial({color:0x49e07a, transparent:true, opacity:.22, blending:THREE.AdditiveBlending, depthWrite:false, fog:false})));
+  shield.scale.set(Wd*.9,Math.max(1.25,H*.9),L*.68); shield.position.y=.7; shield.visible=false; g.add(shield);
+  const ram=glowOn(new THREE.Mesh(new THREE.BoxGeometry(Wd+.5,.6,.5), new THREE.MeshBasicMaterial({color:0xff7a1a, transparent:true, opacity:.8, blending:THREE.AdditiveBlending, depthWrite:false, fog:false})));
+  ram.position.set(0,.5,L/2+.2); ram.visible=false; g.add(ram);
+  const blob=new THREE.Mesh(new THREE.PlaneGeometry(Wd+1.3,L+1.5), new THREE.MeshBasicMaterial({map:TEX.blob(), transparent:true, opacity:Q.level?.55:1, depthWrite:false}));
+  blob.rotation.x=-Math.PI/2; blob.position.y=.035; g.add(blob);
+  if(night&&!noBeam){ const bm=new THREE.Mesh(new THREE.PlaneGeometry(7,15), new THREE.MeshBasicMaterial({map:TEX.beam(), transparent:true, depthWrite:false, blending:THREE.AdditiveBlending}));
+    bm.rotation.x=-Math.PI/2; bm.rotation.z=Math.PI; bm.position.set(0,.05,L/2+7.4); g.add(bm); }
+  return {group:g, body, wheels, flames, shield, ram, tailM, night, rearZ:-L/2+.19*L, halfW:Wd/2-.13, col:lookCol(lk), len:L, model:true}; }
 
 /* ================= SHOWROOM (menu scene) ================= */
 const menuScene=new THREE.Scene(); menuScene.background=new THREE.Color(0x07080c); menuScene.fog=new THREE.Fog(0x07080c,16,48); menuScene.environment=studioEnv();
@@ -3200,8 +3264,8 @@ if(window.ResizeObserver) new ResizeObserver(resize).observe(app);
 sel.mode=clamp(sel.mode|0,0,MODES.length-1); sel.track=clamp(sel.track|0,0,TRACKS.length-1); sel.car=clamp(sel.car|0,0,CARS.length-1);
 if(TESTING){ if(!SAVES.cur){ const id=newId(); SAVES.list.push({id,name:NET.name,ts:0}); SAVES.cur=id; store.set('saves',SAVES); } if(!window.__swStarter) SALE_CARS.forEach(i=>{ CAREER.own[CARS[i].id]=1; }); }
 if(slotOf(SAVES.cur)) NET.name=cleanName(slotOf(SAVES.cur).name);
-fixCar(); setSound(AU.on); setShowCar(sel.car); netBoot(); careerBoot(); rmInit(); cloudInit(); renderMenu(); if(!TESTING||window.__swStarter) openTitle(); applyQuality(); requestAnimationFrame(frame);
-window.__sw={get CAREER(){return CAREER;},levelOf,levelCheck,carRating,campRec,get AU(){return AU;},ENG_KIND,ENG,engLoop,engUpdate,leaderBut,pityLeft,spinCar,buySpins,rollCar,spinWheel,SPIN_ODDS,openTitle,backTitle,campTrack,startCamp,trackData,CAMP_RIVALS,MISSIONS,dailyNow,claimMission,claimDaily,missionsReady,go,get SAVES(){return SAVES;},ownedCars,careerCreate,careerOpen,DIFFS,LB,PROFILE,RM,CLOUD,PIT,CARS,TRACKS,MODES,SKINS,PAINTS,lookOf,setLook,shopStock,buyItem,openShop,G,sel,Q,NET,startRace,simulate,applyQuality,useItem,netStartRaceHost,ff(sec){ for(let i=0;i<sec*60;i++) simulate(1/60); },get T(){return T;},get scene(){return scene;},debug:{boxes:()=>boxes.length,oils:()=>oils.length,missiles:()=>missiles.length,list:()=>missiles}};
+fixCar(); setSound(AU.on); setShowCar(sel.car); netBoot(); careerBoot(); rmInit(); cloudInit(); modelsInit(); renderMenu(); if(!TESTING||window.__swStarter) openTitle(); applyQuality(); requestAnimationFrame(frame);
+window.__sw={get CAREER(){return CAREER;},MODELS,loadCarModel,levelOf,levelCheck,carRating,campRec,get AU(){return AU;},ENG_KIND,ENG,engLoop,engUpdate,leaderBut,pityLeft,spinCar,buySpins,rollCar,spinWheel,SPIN_ODDS,openTitle,backTitle,campTrack,startCamp,trackData,CAMP_RIVALS,MISSIONS,dailyNow,claimMission,claimDaily,missionsReady,go,get SAVES(){return SAVES;},ownedCars,careerCreate,careerOpen,DIFFS,LB,PROFILE,RM,CLOUD,PIT,CARS,TRACKS,MODES,SKINS,PAINTS,lookOf,setLook,shopStock,buyItem,openShop,G,sel,Q,NET,startRace,simulate,applyQuality,useItem,netStartRaceHost,ff(sec){ for(let i=0;i<sec*60;i++) simulate(1/60); },get T(){return T;},get scene(){return scene;},debug:{boxes:()=>boxes.length,oils:()=>oils.length,missiles:()=>missiles.length,list:()=>missiles}};
 })();
 </script>
 
