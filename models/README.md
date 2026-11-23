@@ -32,6 +32,18 @@ Todo lo demás (interior, llantas, parrillas, logos...) se ve tal cual lo pintas
 
 File → Export → glTF 2.0: formato **glTF Binary (.glb)**, **+Y Up** marcado, **Apply Modifiers** marcado, compresión desactivada.
 
+### Modelos pesados (por ejemplo, descargados de Sketchfab)
+
+Un coche de Sketchfab puede pesar 20–100 MB. El juego lee modelos comprimidos con **meshopt** y texturas **WebP**, que pesan mucho menos. Para comprimir uno:
+
+```bash
+npx @gltf-transform/cli optimize original.glb models/cars/p911.glb --compress meshopt --texture-compress webp --texture-size 1024
+```
+
+Si el modelo sale con las piezas mezcladas (sin ruedas separadas), añade `--flatten false --join-named false`. La compresión Draco no está incluida: usa meshopt.
+
+Los modelos de Sketchfab con licencia **CC-BY** se pueden usar dando crédito al autor: anota el nombre del modelo, el autor y el enlace (por ejemplo en `models/CREDITS.md`).
+
 ## Ids de los coches
 
 ae86, evo, wrx, rx7, supra, r34, m4, gtr, stang, nsx, fordgt, p911, viper, f40, r8, lambo, mcl, vette, sf90, p918, senna, nevera, evija, chiron, amgone, huayra, revuel, jesko, valk, bolide, comet, titan, specter, sideways

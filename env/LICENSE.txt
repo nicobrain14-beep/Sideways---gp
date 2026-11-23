@@ -1,0 +1,2 @@
+The images in this folder are CC0 (public domain) HDRIs from Poly Haven (https://polyhaven.com),
+taken from the @pmndrs/assets package (CC0-1.0), resized and tone-mapped for use as reflection maps.

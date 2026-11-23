@@ -1,6 +1,10 @@
+three-r187.min.js bundles three.js r187 (npm three@0.187.0) with these add-ons from the same release:
+GLTFLoader, HDRLoader, RoundedBoxGeometry and BufferGeometryUtils (three.js, MIT, license below),
+and the meshoptimizer decoder (MIT, Copyright (C) 2016-2026 Arseny Kapoulkine).
+
 The MIT License
 
-Copyright © 2010-2021 three.js authors
+Copyright © 2010-2026 three.js authors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

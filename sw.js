@@ -1,6 +1,6 @@
 // Offline support. Bump VERSION when the game files change so players get the new build.
-const VERSION = 'sgp-v13';
-const CORE = ['/', '/index.html', '/vendor/three-r128.min.js', '/vendor/peerjs-1.5.5.min.js', '/config.js', '/manifest.webmanifest', '/icons/icon.svg', '/icons/icon-192.png'];
+const VERSION = 'sgp-v14';
+const CORE = ['/', '/index.html', '/vendor/three-r187.min.js', '/vendor/peerjs-1.5.5.min.js', '/config.js', '/manifest.webmanifest', '/icons/icon.svg', '/icons/icon-192.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));

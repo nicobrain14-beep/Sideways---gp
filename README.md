@@ -41,6 +41,23 @@ Ejecútalo dentro de esta carpeta y acepta las opciones por defecto.
 - **Volver a tus partidas.** El botón con tu nombre, arriba en todas las pantallas del menú (o **Switch career** en **Career**), abre la lista de partidas. **Back** la cierra sin cambiar nada.
 - **Estadísticas y Reset career.** La pantalla **Career** muestra tus números. Reset career borra la partida actual (hay que pulsarlo dos veces) y vuelves a elegir 5 coches.
 
+## Garaje y taller
+
+Los menús están dentro de un garaje 3D: piso de concreto pulido que refleja el carro, paredes de lámina, repisas con cajas, cajas de equipo, lámparas de trabajo y luces en el techo que se reflejan en la pintura. Al cambiar de pantalla la cámara se mueve sola alrededor del carro; puedes **arrastrar** para mirarlo desde cualquier lado y **hacer zoom** con la rueda del ratón o pellizcando la pantalla.
+
+El **taller** se abre con la tarjeta **Garage** de la pantalla de inicio o con el botón **Tune** de la pantalla del carro. Tiene ocho secciones, y la cámara se va sola a la parte del carro que estás cambiando:
+
+- **Paint:** color de la carrocería, color de los detalles y skin (los que compraste en el Paint shop).
+- **Wheels:** 6 diseños de rines, color de rines, color de los calipers de freno y altura (de fábrica, rebajado o muy rebajado).
+- **Body kit:** splitter delantero, faldones laterales, difusor trasero, cofre (rejillas, toma de aire o fibra de carbono) y techo (aleta o toma de aire).
+- **Spoiler:** sin alerón, ducktail, alerón GT o alerón de carreras.
+- **Exhaust:** puntas de escape (cuatro, centrales o de titanio).
+- **Lights:** neón debajo del carro (7 colores), polarizado de vidrios y número de carrera en las puertas.
+- **Performance:** motor, turbo, caja de cambios, suspensión, llantas y reducción de peso, con 5 niveles cada uno. Suben los números del carro y su valoración (Rating), y el carro corre así en las carreras.
+- **Service:** cada carrera gasta un poco el carro (más si chocas o te das vueltas). Por debajo de 70% pierde algo de velocidad, hasta 5% en 0%. **Repair** lo deja al 100%. **Wash** lo limpia (el polvo es solo visual y se acumula más rápido en nieve, arena y ceniza).
+
+Las piezas se **prueban antes de comprarlas**: tocas una y la ves puesta en el carro; si te gusta, **Buy and fit**; si no, **Undo**. Cada pieza se compra una vez para ese carro y luego se puede quitar y poner gratis. El precio depende de la rareza del carro. Los rivales también salen con piezas al azar, y en el online los demás ven las tuyas.
+
 ## Cajas de poder
 
 Nitro, misil, mancha de aceite, escudo, onda de choque, ariete y la **bomba al líder**: vuela alta por encima de todos, sigue al coche que va primero y explota sobre él (y sobre quien esté a menos de 14 m). Solo la consiguen los que van por detrás; un escudo la para. Si la lanzas yendo primero, va a por el segundo. El misil, si vas primero, se da la vuelta y va a por el coche de detrás.
@@ -187,7 +204,9 @@ Luego abre http://localhost:3000.
 | Archivo | Para qué sirve |
 |---|---|
 | `index.html` | El juego completo |
-| `vendor/three-r128.min.js` | Motor 3D (three.js r128, licencia MIT) incluido localmente, sin depender de un CDN |
+| `vendor/three-r187.min.js` | Motor 3D (three.js r187, licencia MIT, con el cargador de modelos glTF y el descompresor meshopt) incluido localmente, sin depender de un CDN |
+| `env/` | Fotos de cielo de 360° (CC0, Poly Haven) para los reflejos en las carreras |
+| `models/` | Modelos 3D opcionales de los carros (ver `models/README.md`) |
 | `vendor/peerjs-1.5.5.min.js` | Conexión entre jugadores (PeerJS 1.5.5, licencia MIT) |
 | `config.js` | Dirección del servidor de retransmisión |
 | `relay/` | Servidor para Cloudflare: retransmisión del online y clasificación global (no se sube a Vercel) |
@@ -198,7 +217,7 @@ Luego abre http://localhost:3000.
 
 ## Al publicar una versión nueva
 
-Cambia `VERSION` en `sw.js` (por ejemplo `sgp-v8`) para que los jugadores que lo tengan guardado reciban los archivos nuevos.
+Cambia `VERSION` en `sw.js` (por ejemplo `sgp-v15`) para que los jugadores que lo tengan guardado reciban los archivos nuevos.
 
 ## Controles
 
