@@ -1,0 +1,9 @@
+{
+  "name": "sideways-gp",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Neon low-poly 3D arcade racer that runs in the browser.",
+  "scripts": {
+    "dev": "npx --yes serve@14.2.4 -l 3000 ."
+  }
+}

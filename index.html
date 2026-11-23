@@ -1,7 +1,34 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Sideways GP</title>
-<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Neon low-poly 3D arcade racer: drift boosts, power boxes, crashing rivals, a 50-stage campaign, eleven modes, car spins, a paint shop and missions. Plays in the browser.">
+<meta name="theme-color" content="#0b0d12">
+<meta name="color-scheme" content="dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Sideways GP">
+<meta property="og:description" content="Drift, boost and crash your way through nine circuits, from a banked oval to the streets of Monaco. Free in the browser.">
+<meta property="og:image" content="/og.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="preload" href="/vendor/three-r128.min.js" as="script">
+<link rel="preload" href="/vendor/peerjs-1.5.5.min.js" as="script">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:ital,wght@1,600;1,800;1,900&family=Barlow+Condensed:wght@500;600;700&display=swap">
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;font:14px system-ui,sans-serif}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
 <style>
 /* Art direction: NEON LOW-POLY ARCADE. Faceted low-poly forms, saturated sunset and night palettes, every light source
    glows (bloom), lens effects scale with speed. The 3D scene and the whole in-race HUD are drawn per frame (WebGL + 2D canvas);
@@ -124,6 +151,7 @@ input.code{text-transform:uppercase;letter-spacing:.3em;font-family:var(--displa
 .odds i{font-style:normal;font-size:14px;font-weight:700;padding:2px 8px;border:1px solid var(--line);color:var(--dim)}
 .odds i.t1{color:var(--ice)} .odds i.t2{color:#d99cff} .odds i.t3{color:var(--flag)}
 .odds span{flex-basis:100%;color:var(--dim);font-size:14px}
+.odds span.pity{color:#d99cff;font-weight:700;font-size:15px}
 #spCount{color:var(--flag)} #spCount.none{color:var(--dim)}
 @media (max-width:640px){ .spinbox{grid-template-columns:1fr} .spinside .cta{align-self:stretch} }
 .savechip{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink);border-color:rgba(255,255,255,.35)}
@@ -264,6 +292,8 @@ tr.me td{color:var(--flag);font-weight:700}
 }
 @media (max-height:740px){ #cpMap{max-height:118px} }
 </style>
+</head>
+<body>
 <div id="app">
   <canvas id="gl"></canvas>
 
@@ -570,7 +600,9 @@ tr.me td{color:var(--flag);font-weight:700}
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="/vendor/three-r128.min.js"></script>
+<script src="/vendor/peerjs-1.5.5.min.js"></script>
+<script src="/config.js"></script>
 <script>
 (() => {
 'use strict';
@@ -743,9 +775,14 @@ function aiLook(ci){ const c=CARS[ci]; return {c1:Math.random()<.25?pick(PAINTS)
 const SHOP_MS = 12*3600*1000, shopClock = () => Date.now()+(window.__swClock||0);      // both shops run on the real clock, so they keep turning while the game is closed
 const ownCar = i => !!CAREER.own[CARS[i].id], ownedCars = () => CARS.map((c,i)=>i).filter(ownCar);
 // car spins: the tier is drawn first (better tiers are rarer), then a car from that tier; prize cars are never in the draw
-const SPIN_ODDS=[55,28,13,4], SPIN_BACK=[1500,4000,10000,25000], SPIN_PRICE=6000, SPIN5_PRICE=27000, MISSION_SPINS=[1,2,3,5];
-function rollCar(){ let r=Math.random()*100, t=0; while(t<3&&r>=SPIN_ODDS[t]){ r-=SPIN_ODDS[t]; t++; } return pick(CARS.map((c,i)=>i).filter(i=>CARS[i].tier===t)); }
-function spinCar(){ const C=CAREER; if((C.spins|0)<1) return null; const i=rollCar(), c=CARS[i], dup=ownCar(i), back=dup?SPIN_BACK[c.tier]:0;
+// Fairness: the odds lean less on Common, every 10th spin without an Epic or Legendary is guaranteed one, and a spin only
+// lands on a car you already own once you have every car of that rarity (that duplicate pays credits instead).
+const SPIN_ODDS=[35,35,22,8], SPIN_BACK=[1000,2500,6000,15000], SPIN_PITY=10, SPIN_PRICE=6000, SPIN5_PRICE=27000, MISSION_SPINS=[1,2,3,5];
+function rollTier(high){ const w=SPIN_ODDS.map((p,t)=>high&&t<2?0:p), sum=w.reduce((a,b)=>a+b,0); let r=Math.random()*sum, t=0; while(t<3&&r>=w[t]){ r-=w[t]; t++; } return t; }
+function rollCar(high){ const t=rollTier(high), all=CARS.map((c,i)=>i).filter(i=>CARS[i].tier===t), fresh=CAREER?all.filter(i=>!ownCar(i)):[]; return pick(fresh.length?fresh:all); }
+const pityLeft = () => Math.max(1,SPIN_PITY-(CAREER.pity|0));      // spins until an Epic or Legendary is certain
+function spinCar(){ const C=CAREER; if((C.spins|0)<1) return null; const i=rollCar((C.pity|0)>=SPIN_PITY-1), c=CARS[i], dup=ownCar(i), back=dup?SPIN_BACK[c.tier]:0;
+  C.pity=c.tier>=2?0:(C.pity|0)+1;
   C.spins--; C.feat.spins=(C.feat.spins|0)+1; if(dup){ C.credits+=back; C.earned+=back; } else C.own[c.id]=1; saveCareer(); return {i,dup,back}; }
 function buySpins(n){ const C=CAREER, price=n===5?SPIN5_PRICE:SPIN_PRICE*n; if(C.credits<price) return false; C.credits-=price; C.spent+=price; C.spins=(C.spins|0)+n; C.feat.shop=(C.feat.shop|0)+1; saveCareer(); return true; }
 // what the shop sells right now: 4 skins and 6 paints picked by the 12-hour period, the same for every player, one of them at 40% off
@@ -859,7 +896,8 @@ const ITEMS = {
  oil:    {name:'Oil slick', col:'#b58cff', icon:'M12 2s7 8 7 13a7 7 0 0 1-14 0c0-5 7-13 7-13z'},
  shield: {name:'Shield',    col:'#49e07a', icon:'M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5l8-3z'},
  emp:    {name:'Shockwave', col:'#ffc21a', icon:'M13 2L4 14h6l-1 8 9-12h-6l1-8z'},
- ram:    {name:'Battering ram', col:'#ff7a1a', icon:'M2 6h3c0 5 2.5 8 7 8s7-3 7-8h3c0 7-4 11-10 11S2 13 2 6zm8 13h4v3h-4z'}
+ ram:    {name:'Battering ram', col:'#ff7a1a', icon:'M2 6h3c0 5 2.5 8 7 8s7-3 7-8h3c0 7-4 11-10 11S2 13 2 6zm8 13h4v3h-4z'},
+ lbomb:  {name:'Leader bomb', col:'#ff2bd0', icon:'M10 8a7 7 0 1 1 0 14a7 7 0 1 1 0-14zm2.6-1.4l2.1-2.1 1.4 1.4-2.1 2.1zM19 1l1 2.2 2.2.8-2.2.8L19 7l-.8-2.2L16 4l2.2-.8z'}
 };
 const DRIVERS = ['Nova','Blaze','Kato','Ziggy','Mako','Rhea','Dash','Onyx','Juno','Pax'];
 const PTS = [10,8,6,5,4,3,2,1];
@@ -1004,16 +1042,90 @@ function audioInit(){
   try{
     const C = window.AudioContext||window.webkitAudioContext; if(!C) return;
     const ctx = AU.ctx = new C(); AU.master = ctx.createGain(); AU.master.gain.value=.5; AU.master.connect(ctx.destination);
-    const o1=ctx.createOscillator(), o2=ctx.createOscillator(), f=ctx.createBiquadFilter(), g=ctx.createGain();
-    o1.type='sawtooth'; o2.type='square'; f.type='lowpass'; f.frequency.value=700; g.gain.value=0;
-    o1.connect(f); o2.connect(f); f.connect(g); g.connect(AU.master); o1.start(); o2.start();
     const nb=ctx.createBuffer(1,ctx.sampleRate,ctx.sampleRate), d=nb.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
-    AU.noise=nb;
-    const ns=ctx.createBufferSource(); ns.buffer=nb; ns.loop=true; const bf=ctx.createBiquadFilter(); bf.type='bandpass'; bf.frequency.value=1700; bf.Q.value=2.5; const sg=ctx.createGain(); sg.gain.value=0;
-    ns.connect(bf); bf.connect(sg); sg.connect(AU.master); ns.start();
-    AU.eng={o1,o2,f,g,sg};
+    AU.noise=nb; AU.eng=audioEngine(ctx);
   }catch(e){ AU.ctx=null; }
 }
+/* ---- engine sound ----
+   No recordings: each engine is rebuilt from how a real one makes noise. Every cylinder firing is a short pressure pulse
+   that rings the exhaust (a few damped resonances), with small random changes in strength and timing so it rumbles
+   instead of buzzing; V8s fire their banks unevenly, which gives the burble. Two loops are rendered per engine, one
+   recorded "at" low revs and one at high revs, played faster or slower with the revs and crossfaded, so the sound never
+   gets squeaky. Gears, throttle, lift-off pops, turbo whoosh and tyre squeal sit on top. Electric cars whine instead. */
+const ENG_KIND = {ae86:'i4',evo:'i4',wrx:'flat4',rx7:'rotary',supra:'i6',r34:'i6',m4:'i6',gtr:'v6',nsx:'v6',fordgt:'v6',amgone:'v6',p911:'flat6',comet:'i6',
+  stang:'v8x',vette:'v8x',titan:'v8x',mcl:'v8',senna:'v8',f40:'v8',sf90:'v8',p918:'v8',jesko:'v8',lambo:'v10',r8:'v10',viper:'v10',sideways:'v10',
+  revuel:'v12',huayra:'v12',valk:'v12',specter:'v12',chiron:'w16',bolide:'w16',nevera:'ev',evija:'ev'};
+// cylinders, redline, exhaust resonances [Hz, decay ms, strength] at the loop's own revs, firing unevenness, rasp (noise)
+const ENG = {
+  i4:{cyl:4,red:7600,res:[[95,9,1],[260,5,.55],[720,2.5,.25]],lump:.08,rasp:.07}, flat4:{cyl:4,red:7200,res:[[80,11,1],[210,6,.6],[600,3,.2]],lump:.35,rasp:.06},
+  rotary:{cyl:3,red:9000,res:[[140,6,1],[420,3.5,.6],[1100,2,.3]],lump:.05,rasp:.11},
+  i6:{cyl:6,red:7400,res:[[110,8,1],[330,4.5,.6],[900,2.2,.3]],lump:.05,rasp:.05}, v6:{cyl:6,red:7200,res:[[100,8,1],[290,5,.55],[800,2.5,.25]],lump:.12,rasp:.06},
+  flat6:{cyl:6,red:9000,res:[[120,7,1],[360,4,.65],[1050,2,.35]],lump:.08,rasp:.06},
+  v8:{cyl:8,red:8500,res:[[85,10,1],[250,5.5,.6],[700,2.6,.3]],lump:.15,rasp:.05}, v8x:{cyl:8,red:7000,res:[[60,14,1],[170,7,.65],[480,3,.25]],lump:.5,rasp:.05},
+  v10:{cyl:10,red:8800,res:[[105,8,1],[320,4.5,.7],[950,2.2,.35]],lump:.1,rasp:.05}, v12:{cyl:12,red:9000,res:[[120,7,1],[380,4,.7],[1150,2,.4]],lump:.05,rasp:.04},
+  w16:{cyl:16,red:6800,res:[[70,12,1],[200,6,.6],[560,3,.25]],lump:.08,rasp:.04}
+};
+const ENG_LOOPS = {};
+function engLoop(kind,base){ const key=kind+'@'+base; if(ENG_LOOPS[key]) return ENG_LOOPS[key];
+  const e=ENG[kind], ctx=AU.ctx, sr=ctx.sampleRate, fire=base/60*e.cyl/2, np=Math.max(8,Math.round(1.5*fire)), n=Math.round(np*sr/fire), per=n/np;
+  const buf=ctx.createBuffer(1,n,sr), d=buf.getChannelData(0), R=rng(kind.length*977+base), L=Math.round(sr*.045);
+  const pat=[]; for(let k=0;k<e.cyl;k++) pat.push(1+e.lump*(k%2?-1:1)*(k%4<2?1:.6)+(R()-.5)*e.lump*.5);      // the uneven pattern repeats every engine cycle
+  // one firing, worked out once: the exhaust ringing, the thump of the firing itself, and how the rasp fades
+  const ph=e.res.map(()=>R()*6.283), ker=new Float32Array(L), env=new Float32Array(L);
+  for(let j=0;j<L;j++){ const x=j/sr; let v=0; for(let q=0;q<e.res.length;q++){ const r=e.res[q]; v+=r[2]*Math.exp(-x*1000/r[1])*Math.sin(6.2832*r[0]*x+ph[q]); }
+    ker[j]=v+(j<sr*.002?Math.sin(Math.PI*j/(sr*.002)):0)*.6; env[j]=e.rasp*Math.exp(-x*1000/4); }
+  const RL=Math.min(L,Math.round(sr*.016));      // the rasp is gone after about 16 ms
+  for(let k=0;k<np;k++){ const a=pat[k%e.cyl]*(1+(R()-.5)*.22), t0=Math.round(k*per+(R()-.5)*per*.08);
+    for(let j=0;j<L;j++){ let v=ker[j]; if(j<RL) v+=(R()*2-1)*env[j]; d[(t0+j+n)%n]+=a*v; } }
+  let pk=0; for(let i=0;i<n;i++) pk=Math.max(pk,Math.abs(d[i])); for(let i=0;i<n;i++) d[i]=d[i]/pk*.85;
+  return ENG_LOOPS[key]=buf; }
+function engStop(){ const e=AU.eng; if(!e||!e.src) return; for(const s of e.src) try{ s.stop(); }catch(_){} e.src=null; e.kind=''; }
+function engStart(id){ const e=AU.eng, ctx=AU.ctx, kind=ENG_KIND[id]||'v8'; if(!e||e.kind===kind) return; engStop(); e.kind=kind;
+  if(kind==='ev'){ e.src=[]; return; }
+  const p=ENG[kind]; e.lo=1800; e.hi=Math.round(p.red*.68);
+  e.src=[engLoop(kind,e.lo),engLoop(kind,e.hi)].map((b,k)=>{ const s=ctx.createBufferSource(); s.buffer=b; s.loop=true; s.connect(k?e.gh:e.gl); s.start(); return s; }); }
+function audioEngine(ctx){
+  const shp=ctx.createWaveShaper(), cv=new Float32Array(1024); for(let i=0;i<1024;i++){ const x=i/511.5-1; cv[i]=Math.tanh(x*1.6)/Math.tanh(1.6); } shp.curve=cv;
+  const gl=ctx.createGain(), gh=ctx.createGain(), lp=ctx.createBiquadFilter(), body=ctx.createBiquadFilter(), g=ctx.createGain();
+  lp.type='lowpass'; lp.Q.value=.7; body.type='lowshelf'; body.frequency.value=180; body.gain.value=5; g.gain.value=0;
+  gl.connect(shp); gh.connect(shp); shp.connect(body); body.connect(lp); lp.connect(g); g.connect(AU.master);
+  // electric motor: a whine and its inverter overtone
+  const ew=ctx.createOscillator(), ew2=ctx.createOscillator(), eg=ctx.createGain(); ew.type='sine'; ew2.type='triangle'; eg.gain.value=0; ew.connect(eg); ew2.connect(eg); eg.connect(AU.master); ew.start(); ew2.start();
+  // turbo and intake whoosh
+  const tn=ctx.createBufferSource(); tn.buffer=AU.noise; tn.loop=true; const tb=ctx.createBiquadFilter(); tb.type='bandpass'; tb.Q.value=1.4; const tg=ctx.createGain(); tg.gain.value=0; tn.connect(tb); tb.connect(tg); tg.connect(AU.master); tn.start();
+  // tyre squeal: a wavering tone plus scrubbed noise
+  const sq=ctx.createOscillator(), sq2=ctx.createOscillator(), lfo=ctx.createOscillator(), lg=ctx.createGain(), sb=ctx.createBiquadFilter(), sg=ctx.createGain();
+  sq.type='triangle'; sq2.type='sawtooth'; sq.frequency.value=1050; sq2.frequency.value=1580; lfo.frequency.value=7; lg.gain.value=45; lfo.connect(lg); lg.connect(sq.frequency); lg.connect(sq2.frequency);
+  sb.type='bandpass'; sb.frequency.value=1250; sb.Q.value=3; const sn=ctx.createBufferSource(); sn.buffer=AU.noise; sn.loop=true; const snf=ctx.createBiquadFilter(); snf.type='bandpass'; snf.frequency.value=2600; snf.Q.value=1.2; const sng=ctx.createGain(); sng.gain.value=.35;
+  sq.connect(sb); sq2.connect(sb); sn.connect(snf); snf.connect(sng); sng.connect(sb); sb.connect(sg); sg.gain.value=0; sg.connect(AU.master); sq.start(); sq2.start(); lfo.start(); sn.start();
+  return {gl,gh,lp,g,ew,ew2,eg,tb,tg,sg,src:null,kind:'',rpm:900,gear:1,shiftT:0,lift:0,popT:0}; }
+const engSilence = () => { const e=AU.eng; if(!e) return; const t=AU.ctx.currentTime; for(const q of [e.g,e.eg,e.tg,e.sg]) q.gain.setTargetAtTime(0,t,.05); };
+// revs from road speed through six gears; shifts up near the redline and down when the revs fall away
+const GEAR_TOP=[.19,.33,.48,.63,.8,1.02];
+function engUpdate(p,dt){ const e=AU.eng, ctx=AU.ctx; if(!e||!ctx) return; const t=ctx.currentTime; engStart(p.spec.id);
+  const on=G.state==='race'||G.state==='countdown', th=on?(G.state==='countdown'?(keys.up?1:0):p.ctrl.th):0, sN=clamp(p.speed/(p.spec.top*G.speedMul*1.05),0,1.25), boost=p.boostT>0;
+  if(e.kind==='ev'){ const f=70+sN*900; e.ew.frequency.setTargetAtTime(f,t,.05); e.ew2.frequency.setTargetAtTime(f*2.02,t,.05); e.eg.gain.setTargetAtTime(on?.025+.05*th*(.3+sN):0,t,.06);
+    e.g.gain.setTargetAtTime(0,t,.05); e.tg.gain.setTargetAtTime(on?.015*sN:0,t,.1); e.tb.frequency.setTargetAtTime(900+sN*1600,t,.1); }
+  else { const P=ENG[e.kind], idle=850, red=P.red;
+    let gear=e.gear, want;
+    const rpmIn=gi=>idle+(sN/GEAR_TOP[gi-1])*(red-idle)*.93;
+    if(G.state==='countdown'||p.speed<2){ gear=1; want=idle+th*(red*.72-idle); }
+    else { if(rpmIn(gear)>red*.94&&gear<6){ gear++; e.shiftT=.12; } else if(gear>1&&rpmIn(gear-1)<red*.72){ gear--; e.shiftT=.08; }
+      want=rpmIn(gear); if(p.drifting||p.spinT>0||(th&&sN<.08)) want+=900; if(!th) want=Math.max(idle*1.1,want*.96); }
+    e.gear=gear; want=clamp(want,idle,red*1.02);
+    e.rpm+=(want-e.rpm)*Math.min(1,dt*(want>e.rpm?(th?9:4):6)); if(e.shiftT>0) e.shiftT-=dt;
+    const r=e.rpm, x=clamp((r-2600)/(3400),0,1);      // crossfade low loop -> high loop
+    if(e.src&&e.src.length){ e.src[0].playbackRate.setTargetAtTime(r/e.lo,t,.02); e.src[1].playbackRate.setTargetAtTime(r/e.hi,t,.02); }
+    e.gl.gain.setTargetAtTime(Math.cos(x*Math.PI/2),t,.03); e.gh.gain.setTargetAtTime(Math.sin(x*Math.PI/2),t,.03);
+    const load=th?1:.35, cut=e.shiftT>0?.35:1;
+    e.lp.frequency.setTargetAtTime((th?900+r*.55:420+r*.16)*(boost?1.25:1),t,.04);
+    e.g.gain.setTargetAtTime(on?(.1+.12*load+.06*(r/red))*cut*(G.state==='finished'?.4:1):0,t,.035);
+    // lift off at high revs: a few crackles from the exhaust
+    if(!th&&e.lastTh&&r>red*.55) e.popT=.6; e.lastTh=th;
+    if(e.popT>0){ e.popT-=dt; if(Math.random()<dt*14) noise(.035+Math.random()*.03,.12+Math.random()*.12,1500,250); }
+    e.tg.gain.setTargetAtTime(on?(.012+.03*th*(r/red))+(boost?.05:0):0,t,.08); e.tb.frequency.setTargetAtTime(1400+r*.35+(boost?900:0),t,.08);
+    e.eg.gain.setTargetAtTime(0,t,.05); }
+  const sl=p.onRoad&&p.speed>8?clamp((Math.abs(p.vl)-4)/14,0,1):0, sq=on?sl*.09+(p.spinT>0?.07:0):0; e.sg.gain.setTargetAtTime(sq,t,.05); }
 function tone(freq,dur,type,vol,slide){
   if(!AU.ctx||!AU.on) return; const c=AU.ctx,t=c.currentTime,o=c.createOscillator(),g=c.createGain();
   o.type=type||'square'; o.frequency.setValueAtTime(freq,t); if(slide) o.frequency.exponentialRampToValueAtTime(Math.max(30,slide),t+dur);
@@ -1027,12 +1139,12 @@ function noise(dur,vol,f0,f1){
 const SFX = {
   beep:()=>tone(440,.18,'square',.12), go:()=>tone(880,.5,'square',.14),
   pickup:()=>{ tone(660,.08,'square',.1); setTimeout(()=>tone(990,.12,'square',.1),70); },
-  boost:()=>{ noise(.7,.28,400,3200); tone(180,.5,'sawtooth',.08,520); },
-  crash:(v)=>noise(.28,Math.min(.5,.12+v*.02),900,120),
+  boost:()=>{ noise(.9,.26,1800,7000); tone(2300,.7,'sine',.035,4200); },
+  crash:(v)=>{ const k=Math.min(1,.25+v*.04); noise(.32,.42*k,2600,140); tone(310,.16,'triangle',.07*k); tone(737,.1,'triangle',.05*k); },
   boom:()=>{ noise(.7,.55,1400,60); tone(120,.5,'sine',.3,40); },
-  fire:()=>{ noise(.5,.25,3000,500); tone(700,.4,'sawtooth',.07,200); },
+  fire:()=>{ noise(.6,.25,5000,700); tone(950,.35,'sine',.05,380); },
   zap:()=>{ tone(1400,.35,'sawtooth',.1,90); noise(.3,.15,5000,800); },
-  spin:()=>tone(520,.6,'triangle',.12,140), shield:()=>tone(520,.3,'sine',.14,1040),
+  spin:()=>{ noise(.7,.16,3600,1300); tone(1150,.6,'triangle',.05,760); }, shield:()=>tone(520,.3,'sine',.14,1040),
   elim:()=>{ tone(300,.5,'square',.12,80); }, lap:()=>{ tone(784,.1,'square',.1); setTimeout(()=>tone(1046,.2,'square',.1),100); },
   win:()=>[523,659,784,1046].forEach((f,i)=>setTimeout(()=>tone(f,.25,'square',.12),i*130))
 };
@@ -1205,7 +1317,7 @@ const MISSIONS = [   // t: how hard; v: progress so far; n: target; cr: credits;
  {id:'e50',t:3,name:'Finish all fifty laps of Endurance 50',n:1,v:C=>C.feat.endu50|0,cr:25000,car:'titan'},{id:'l3',t:3,name:'Win 3 races on Legend',n:3,v:C=>C.feat.legend|0,cr:30000},{id:'c50',t:3,name:'Finish the campaign',n:CAMP_N,v:()=>campCleared(),cr:50000}
 ];
 function careerNew(){ return {v:1,ts:0,credits:1500,earned:0,spent:0,races:0,wins:0,podiums:0,knock:0,dist:0,top:0,time:0,driftBest:0,driftLong:0,boosts:0,items:0,hits:0,spun:0,crashes:0,bumps:0,pits:0,
-  spins:0,tracks:{},cars:{},modes:{},paints:{},skins:{},look:{},own:{},feat:{},claimed:{},daily:{},camp:{},recent:[]}; }
+  spins:0,pity:0,tracks:{},cars:{},modes:{},paints:{},skins:{},look:{},own:{},feat:{},claimed:{},daily:{},camp:{},recent:[]}; }
 function careerFrom(c){ if(!c||typeof c!=='object'||c.v!==1) return null; const n=careerNew();
   for(const k in n) if(typeof c[k]===typeof n[k]&&Array.isArray(c[k])===Array.isArray(n[k])) n[k]=c[k];
   // careers from before the paint shop: car upgrades no longer exist, so what was spent on them comes back as credits
@@ -1702,7 +1814,7 @@ function aiControl(c,dt){
   if(c.item&&c.isAI){ c.itemDelay-=dt; c.itemHeld+=dt; if(c.itemDelay<=0){ let use=c.itemHeld>9; const it=c.item;
       let ahead=1e9, behind=1e9, nearN=0; for(const o of G.cars){ if(o===c||o.elim) continue; const dp=(o.prog-c.prog)*d.sp; if(dp>0) ahead=Math.min(ahead,dp); else behind=Math.min(behind,-dp); if(Math.abs(dp)<42) nearN++; }
       if(it==='nitro') use=use||(Math.abs(d.cv[j])<.005&&Math.abs(d.cv[j2])<.005&&c.spinT<=0);
-      else if(it==='missile') use=use||ahead<130; else if(it==='oil') use=use||behind<28; else if(it==='shield') use=use||c.itemHeld>3;
+      else if(it==='missile') use=use||ahead<130; else if(it==='lbomb') use=use||(rankOf(c)>1&&c.itemHeld>1.5); else if(it==='oil') use=use||behind<28; else if(it==='shield') use=use||c.itemHeld>3;
       else if(it==='emp') use=use||nearN>0; else if(it==='ram') use=use||ahead<26;
       if(use) useItem(c); } }
 }
@@ -1711,7 +1823,7 @@ function aiControl(c,dt){
 function giveItem(c){
   if(c.remote?c.netItem:(c.item||c.roulette>0)) return;
   const act=G.cars.filter(x=>!x.elim), r=act.length>1?(rankOf(c)-1)/(act.length-1):.5, mh=G.mode==='mayhem';
-  const w={nitro:2+2*r, missile:(1+3*r)*(mh?1.6:1), oil:2.4-1.4*r, shield:1.8-r, emp:(.3+2*r)*(mh?1.5:1), ram:1+r};
+  const w={nitro:2+2*r, missile:(1+3*r)*(mh?1.6:1), oil:2.4-1.4*r, shield:1.8-r, emp:(.3+2*r)*(mh?1.5:1), ram:1+r, lbomb:act.length>2&&r>.25?(1.6*r*r)*(mh?1.4:1):0};
   let sum=0; for(const k in w) sum+=w[k]; let x=Math.random()*sum, got='nitro'; for(const k in w){ x-=w[k]; if(x<=0){ got=k; break; } }
   if(c.remote){ c.netItem=true; netTo(c,{t:'item',n:c.nid,it:got}); } else if(c.isPlayer){ c.roulette=.9; c.pending=got; SFX.pickup(); } else { c.item=got; c.itemDelay=rand(1,4)*(mh?.5:1); c.itemHeld=0; }
 }
@@ -1723,6 +1835,13 @@ function useItem(c){
   else if(G.online&&!NET.host){ netSend({t:'use',n:c.nid,it,x:r2(c.x),z:r2(c.z),h:r3(c.h),ti:c.ti,lat:r2(c.lat||0)}); if(it==='missile') SFX.fire(); else if(it==='oil') tone(200,.2,'sine',.15,80); }
   else spawnHazard(c,it,c);
 }
+function lbombMesh(){ const g=new THREE.Group(), core=new THREE.Mesh(new THREE.SphereGeometry(.85,16,12), new THREE.MeshStandardMaterial({color:0x17131c,metalness:.6,roughness:.3}));
+  const band=glowOn(new THREE.Mesh(new THREE.TorusGeometry(.88,.11,8,24), new THREE.MeshBasicMaterial({color:0xff2bd0,fog:false}))); band.rotation.x=Math.PI/2;
+  const fins=glowOn(new THREE.Mesh(new THREE.BoxGeometry(2.6,.08,.5), new THREE.MeshBasicMaterial({color:0xff2bd0,fog:false}))); fins.position.z=-.6;
+  const halo=glowOn(new THREE.Mesh(new THREE.PlaneGeometry(6,6), new THREE.MeshBasicMaterial({map:TEX.halo(),color:0xff2bd0,transparent:true,opacity:.75,depthWrite:false,blending:THREE.AdditiveBlending,fog:false})));
+  g.add(core); g.add(band); g.add(fins); g.add(halo); g.userData.halo=halo; return g; }
+// the car in front, leaving out the one who fired (a bomb fired from the lead goes for second place)
+const leaderBut = c => ranking().find(o=>o!==c&&!o.elim&&!o.finished)||null;
 function missileMesh(){ const g=new THREE.Group(), b=glowOn(new THREE.Mesh(new THREE.CylinderGeometry(.22,.22,1.5,8).rotateX(Math.PI/2), new THREE.MeshBasicMaterial({color:0xf2f2f2,fog:false}))), n=glowOn(new THREE.Mesh(new THREE.ConeGeometry(.24,.6,8).rotateX(Math.PI/2), new THREE.MeshBasicMaterial({color:0xff3b4e,fog:false})));
   n.position.z=1.05; g.add(b); g.add(n); return g; }
 function oilAt(x,z,owner,k){ const m=new THREE.Mesh(new THREE.CircleGeometry(2.3,20), new THREE.MeshPhongMaterial({color:0x08080c, shininess:200, specular:0x8866ff, transparent:true, opacity:.88, depthWrite:false, polygonOffset:true, polygonOffsetFactor:-3, polygonOffsetUnits:-3}));
@@ -1735,26 +1854,48 @@ function doSpin(c,t,slow){ if(c.remote){ if(!c.elim) netTo(c,{t:'hit',n:c.nid,d:
 function doZap(o){ if(o.remote) netTo(o,{t:'zap',n:o.nid}); else zapCar(o); }
 function spawnHazard(c,it,s){ const on=G.online&&NET.host; G.stat.hazards++;
   if(it==='oil'){ const x=s.x-Math.sin(s.h)*4.4, z=s.z-Math.cos(s.h)*4.4, k=++G.hk; oilAt(x,z,c,k); if(c.isPlayer) tone(200,.2,'sine',.15,80); if(on) netBroadcast({t:'oil',k,x:r2(x),z:r2(z)}); }
-  else if(it==='missile'){ let tg=null, bd=1e9; for(const o of G.cars){ if(o===c||o.elim) continue; const dp=o.prog-c.prog; if(dp>0&&dp<bd){ bd=dp; tg=o; } }
-    const g=missileMesh(); scene.add(g); missiles.push({id:++G.hk,owner:c,target:tg,ti:(s.ti|0)+3,lat:s.lat||0,life:7,mesh:g,x:s.x,z:s.z,vx:0,vz:0}); if(c.isPlayer||near(c)) SFX.fire(); }
+  else if(it==='missile'){ let tg=null, bd=1e9, dir=1; for(const o of G.cars){ if(o===c||o.elim||o.finished) continue; const dp=o.prog-c.prog; if(dp>0&&dp<bd){ bd=dp; tg=o; } }
+    if(!tg){ dir=-1; for(const o of G.cars){ if(o===c||o.elim||o.finished) continue; const dp=c.prog-o.prog; if(dp>0&&dp<bd){ bd=dp; tg=o; } } }      // leading: it turns round and goes for the car behind
+    const g=missileMesh(); scene.add(g); missiles.push({id:++G.hk,owner:c,target:tg,dir,ti:(s.ti|0)+2*dir,lat:s.lat||0,life:10,mesh:g,x:s.x,z:s.z,vx:0,vz:0}); if(c.isPlayer||near(c)) SFX.fire(); }
+  else if(it==='lbomb'){ const tg=leaderBut(c); if(!tg) return; const g=lbombMesh(); scene.add(g);
+    missiles.push({id:++G.hk,kind:1,owner:c,target:tg,bp:c.prog,lat:c.lat||0,y:2.5,life:25,mesh:g,x:s.x,z:s.z,vx:0,vz:0}); if(c.isPlayer||near(c)) SFX.fire(); if(tg.isPlayer) showMsg('Leader bomb incoming!',1.4,'red'); }
   else if(it==='emp'){ ringAt(s.x,s.z); if(near(c)) SFX.zap(); if(on) netBroadcast({t:'emp',x:r2(s.x),z:r2(s.z)});
     for(const o of G.cars){ if(o===c||o.elim) continue; if((o.x-s.x)**2+(o.z-s.z)**2<46*46){ if(o.shieldT>0||o.invulnT>0) continue; doZap(o); } } }
 }
+// the leader bomb flies high above the race, follows whoever is in front, then dives and blows up around them
+function lbombStep(m,dt){ const d=T, n=d.N; m.life-=dt; const tg=leaderBut(m.owner); if(tg) m.target=tg;
+  const t=m.target, gap=t?t.prog-m.bp:0, step=120*Math.max(1,G.speedMul)*dt/d.sp, ox=m.x, oz=m.z;
+  if(t&&!t.elim){ m.bp+=Math.sign(gap)*Math.min(Math.abs(gap),step); m.lat+=(t.lat-m.lat)*Math.min(1,dt*3); }
+  const left=t?Math.abs(t.prog-m.bp)*d.sp:0, bi=((Math.floor(m.bp)%n)+n)%n, b1=(bi+1)%n, f=m.bp-Math.floor(m.bp);
+  m.x=lerp(d.px[bi],d.px[b1],f)+d.nx[bi]*m.lat; m.z=lerp(d.pz[bi],d.pz[b1],f)+d.nz[bi]*m.lat; if(dt>0){ m.vx=(m.x-ox)/dt; m.vz=(m.z-oz)/dt; }
+  m.y+=((left<40?1+left/40*8:9)-m.y)*Math.min(1,dt*4);      // climbs to 9 m, dives over the last 40 m
+  TS.hint=bi; TS.world(m.x,m.z,m.y,m.mesh.position); m.mesh.rotation.y=Math.atan2(d.tx[bi],d.tz[bi])+(gap<0?Math.PI:0); m.mesh.rotation.z+=dt*6;
+  m.mesh.userData.halo.quaternion.copy(cam.quaternion); if(near(m)) sparks.spawn(m.x,m.y,m.z,rand(-1,1),rand(-1,1),rand(-1,1),.35,1.1,1,.25,.85,1,0,0);
+  if(!(t&&!t.elim&&left<2.5)&&m.life>0) return false;
+  // boom: everyone within 14 m spins out, the target hardest; a shield still saves you
+  const x=t&&!t.elim?t.x:m.x, z=t&&!t.elim?t.z:m.z; fxExplode(x,z,2.4); flash(.25); SFX.boom(); G.stat.booms++;
+  for(const c of G.cars){ if(c.elim) continue; const q=(c.x-x)**2+(c.z-z)**2; if(q>14*14) continue; if(c.shieldT>0&&!c.remote){ c.shieldT=0; continue; }
+    if(doSpin(c,c===t?2.2:1.4,c===t?.25:.55)){ if(m.owner&&m.owner.isPlayer&&c!==m.owner) G.rs.hits++; } if(c.isPlayer) shake=1.2; }
+  if(G.online) netBroadcast({t:'boom',x:r2(x),z:r2(z),s:2.4});
+  return true; }
 function updateItems(dt){
   const d=T, n=d.N, auth=!G.online||NET.host, now=performance.now();
   for(let bi=0;bi<boxes.length;bi++){ const b=boxes[bi]; if(b.t>0){ b.t-=dt; if(b.t<=0) b.mesh.visible=true; continue; } if(!auth) continue;
     for(const c of G.cars){ if(c.elim) continue; const dx=c.x-b.x, dz=c.z-b.z; if(dx*dx+dz*dz<5.3){ b.t=G.mode==='mayhem'?1.5:4.5; b.mesh.visible=false; giveItem(c); if(near(c)) fxSparks(b.x,1.2,b.z,10,1,.8,.3,8); if(G.online) netBroadcast({t:'box',i:bi,d:b.t}); break; } } }
   for(const p of pads){ for(const c of G.cars){ if(c.elim||c.remote||c.padT>0) continue; const dx=c.x-p.x, dz=c.z-p.z; if(dx*dx+dz*dz<12){ c.padT=1.2; boost(c,1.1); } } }
-  if(auth) for(let i=missiles.length-1;i>=0;i--){ const m=missiles[i]; m.life-=dt; m.ti+=100*Math.max(1,G.speedMul)*dt/d.sp;
-    const tg=m.target; if(tg&&!tg.elim){ let ahead=tg.ti-(m.ti%n); if(ahead<-n/2) ahead+=n; if(ahead>-4) m.lat+=(tg.lat-m.lat)*Math.min(1,dt*4.5); }
-    const i0=Math.floor(m.ti)%n, i1=(i0+1)%n, f=m.ti-Math.floor(m.ti), ox=m.x, oz=m.z;
+  if(auth) for(let i=missiles.length-1;i>=0;i--){ if(missiles[i].kind===1){ if(lbombStep(missiles[i],dt)){ scene.remove(missiles[i].mesh); disposeTree(missiles[i].mesh); missiles.splice(i,1); } continue; }
+    const m=missiles[i], dir=m.dir||1; m.life-=dt; m.ti+=dir*115*Math.max(1,G.speedMul)*dt/d.sp;
+    const tg=m.target, mi=((m.ti%n)+n)%n; if(tg&&!tg.elim){ let ahead=(tg.ti-mi)*dir; if(ahead<-n/2) ahead+=n; else if(ahead>n/2) ahead-=n; if(ahead>-6) m.lat+=(tg.lat-m.lat)*Math.min(1,dt*(ahead<10?14:4.5)); }      // steers in hard when the target is close
+    const i0=Math.floor(mi)%n, i1=(i0+1)%n, f=mi-Math.floor(mi), ox=m.x, oz=m.z;
     m.x=lerp(d.px[i0],d.px[i1],f)+d.nx[i0]*m.lat; m.z=lerp(d.pz[i0],d.pz[i1],f)+d.nz[i0]*m.lat; if(dt>0){ m.vx=(m.x-ox)/dt; m.vz=(m.z-oz)/dt; }
-    TS.hint=i0; TS.world(m.x,m.z,.9,m.mesh.position); m.mesh.rotation.y=Math.atan2(d.tx[i0],d.tz[i0]);
+    TS.hint=i0; TS.world(m.x,m.z,.9,m.mesh.position); m.mesh.rotation.y=Math.atan2(d.tx[i0],d.tz[i0])+(dir<0?Math.PI:0);
     sparks.spawn(m.x,.9,m.z,rand(-1,1),rand(0,1),rand(-1,1),.3,.9,1,.7,.3,.9,0,0);
-    let hit=null; for(const c of G.cars){ if(c===m.owner||c.elim) continue; if((c.x-m.x)**2+(c.z-m.z)**2<7.3){ hit=c; break; } }
+    // the hit test covers the whole path flown this frame, so a fast missile cannot slip past a car between two frames
+    let hit=null; const sx=m.x-ox, sz=m.z-oz, sl=sx*sx+sz*sz;
+    for(const c of G.cars){ if(c===m.owner||c.elim) continue; const t=sl>1e-6&&sl<900?clamp(((c.x-ox)*sx+(c.z-oz)*sz)/sl,0,1):1; if((c.x-ox-sx*t)**2+(c.z-oz-sz*t)**2<7.3){ hit=c; break; } }
     if(hit||m.life<=0){ if(hit){ fxExplode(m.x,m.z,1); if(near(hit)) SFX.boom(); doSpin(hit,1.5,.5); G.stat.booms++; if(m.owner&&m.owner.isPlayer) G.rs.hits++; if(hit.isPlayer) shake=1; if(G.online) netBroadcast({t:'boom',x:r2(m.x),z:r2(m.z)}); }
       scene.remove(m.mesh); disposeTree(m.mesh); missiles.splice(i,1); } }
-  else for(const m of missiles){ const age=Math.min(.3,(now-m.t)/1000); m.x=m.tx+m.vx*age; m.z=m.tz+m.vz*age; TS.world(m.x,m.z,.9,m.mesh.position); m.mesh.rotation.y=m.h;
+  else for(const m of missiles){ const age=Math.min(.3,(now-m.t)/1000); m.x=m.tx+m.vx*age; m.z=m.tz+m.vz*age; TS.world(m.x,m.z,m.y||.9,m.mesh.position); m.mesh.rotation.y=m.h; if(m.kind===1){ m.mesh.rotation.z+=dt*6; m.mesh.userData.halo.quaternion.copy(cam.quaternion); }
     sparks.spawn(m.x,.9,m.z,rand(-1,1),rand(0,1),rand(-1,1),.3,.9,1,.7,.3,.9,0,0); }
   if(auth) for(let i=oils.length-1;i>=0;i--){ const o=oils[i]; o.age+=dt; let gone=o.age>45;
     for(const c of G.cars){ if(c.elim||(c===o.owner&&o.age<1.2)) continue; if((c.x-o.x)**2+(c.z-o.z)**2<6.2&&!(c.spinT>0)&&!(c.invulnT>0)){ if(c.shieldT>0) continue; doSpin(c,1.25); if(o.owner&&o.owner.isPlayer&&c!==o.owner) G.rs.hits++; gone=true; break; } }
@@ -1997,12 +2138,12 @@ function showResults(){
   $('#pit').hidden=true; $('#resTitle').textContent=title; $('#resSub').textContent=sub; $('#resBody').innerHTML=body; ab.textContent=again; $('#results').hidden=false; $('#touch').hidden=true;
 }
 function nextRace(){ if(G.online){ if(NET.host) netStartRaceHost(); return; } if(G.camp>=0){ if(G.campGo){ G.camp++; G.campGo=false; } startRace(); return; } const t=G.tour; if(t&&t.scored){ if(t.round<TOUR.length-1) t.round++; else G.tour=null; } startRace(); }
-function toMenu(){ teardownRace(); G.tour=null; G.camp=-1; $('#pit').hidden=true; G.state='menu'; G.paused=false; G.online=false; G.menuOpen=false; $('#hud').hidden=true; $('#touch').hidden=true; $('#results').hidden=true; $('#pause').hidden=true; $('#menu').hidden=false; if(AU.eng){ AU.eng.g.gain.value=0; AU.eng.sg.gain.value=0; } renderMenu(); }
+function toMenu(){ teardownRace(); G.tour=null; G.camp=-1; $('#pit').hidden=true; G.state='menu'; G.paused=false; G.online=false; G.menuOpen=false; $('#hud').hidden=true; $('#touch').hidden=true; $('#results').hidden=true; $('#pause').hidden=true; $('#menu').hidden=false; engSilence(); renderMenu(); }
 function setPaused(v){ if(G.state==='menu'||!$('#results').hidden) return;
   // online the race keeps going for everyone else, so the menu only takes your hands off the wheel
   if(G.online) G.menuOpen=v; else G.paused=v; $('#pause').hidden=!v;
   const on=G.online; $('#restartBtn').hidden=on&&!NET.host; $('#restartBtn').textContent=on?'Restart for everyone':'Restart'; $('#quitBtn').textContent=on?(NET.host?'Back to room':'Leave room'):'Quit to menu';
-  if(v&&AU.eng&&!on){ AU.eng.g.gain.value=0; AU.eng.sg.gain.value=0; } }
+  if(v&&AU.eng&&!on) engSilence(); }
 
 /* ================= VISUALS ================= */
 const tmpCol=new THREE.Color();
@@ -2080,9 +2221,7 @@ function updateVisuals(dt){
     FX.blur+=((reduceMotion?0:bt?.075:p.draft>.5?.035:s01>.97?.014:0)-FX.blur)*Math.min(1,dt*6);
     FX.vig=.36+.12*s01+(bt?.1:0); }
   // audio
-  if(AU.eng&&AU.on){ const e=AU.eng, sN=clamp(p.speed/(p.spec.top*1.3),0,1), gr=Math.min(4,Math.floor(sN*5.5)), fr=sN*5.5-gr, f=58+(fr*.75+.25)*105+gr*9;
-    e.o1.frequency.value=f; e.o2.frequency.value=f*.5; e.f.frequency.value=380+sN*1300+(p.ctrl.th?350:0); e.g.gain.value=G.state==='finished'?.03:.05+(p.ctrl.th?.045:0);
-    const sl=p.onRoad&&p.speed>8?clamp((Math.abs(p.vl)-4)/14,0,1):0; e.sg.gain.value=sl*.16+(p.spinT>0?.12:0); }
+  if(AU.eng&&AU.on) engUpdate(p,dt);
 }
 /* ================= HUD (drawn every frame on a 2D canvas) ================= */
 const hudc=$('#hudc'), hx=hudc.getContext('2d');
@@ -2136,7 +2275,8 @@ function drawHUD(dt){
   // pause glyph and status banner
   panel(w/2-18,12,36,30,0); hx.fillStyle=C.ink; hx.fillRect(w/2-6,20,4,14); hx.fillRect(w/2+2,20,4,14);
   let bt='', warn=false;
-  if(missiles.some(q=>q.target===p)){ bt='MISSILE INCOMING'; warn=true; }
+  if(missiles.some(q=>q.kind===1&&q.target===p)){ bt='LEADER BOMB INCOMING'; warn=true; }
+  else if(missiles.some(q=>q.target===p)){ bt='MISSILE INCOMING'; warn=true; }
   else if(G.wrong>1){ bt='WRONG WAY'; warn=true; }
   else if(G.mode==='elim'){ const left=G.cars.filter(c=>!c.elim).length; bt='KNOCKOUT IN '+Math.max(0,Math.ceil(G.elimT))+'s  ·  '+left+' LEFT'; warn=G.elimT<5&&place===left; }
   else if(G.mode==='drift') bt='SCORE '+p.score.toLocaleString();
@@ -2378,7 +2518,7 @@ function netFromGuest(id,d){ const g=NET.conns.get(id); if(!g||!d||typeof d!=='o
   if(!g.ok) return;
   if(d.t==='car'){ const pl=NET.players.find(x=>x.id===id); if(pl){ pl.car=clamp(d.car|0,0,CARS.length-1); pl.look=packLook(cleanLook(d.look,pl.car)); netLobbySync(); } }
   else if(d.t==='p'&&G.online&&Array.isArray(d.c)){ const c=G.cars[d.c[0]|0]; if(c&&c.peer===id&&!c.elim) netApply(c,d.c); }
-  else if(d.t==='use'&&G.online&&(d.it==='oil'||d.it==='missile'||d.it==='emp')){ const c=G.cars[d.n|0];
+  else if(d.t==='use'&&G.online&&(d.it==='oil'||d.it==='missile'||d.it==='emp'||d.it==='lbomb')){ const c=G.cars[d.n|0];
     if(c&&c.peer===id&&!c.elim) spawnHazard(c,d.it,{x:isFinite(+d.x)?+d.x:c.x,z:isFinite(+d.z)?+d.z:c.z,h:isFinite(+d.h)?+d.h:c.h,ti:clamp(d.ti|0,0,T.N-1),lat:clamp(+d.lat||0,-WALL,WALL)}); }
 }
 function netGuestGone(id){ if(!NET.conns.has(id)) return; NET.conns.delete(id); const i=NET.players.findIndex(x=>x.id===id); if(i<0) return; const pl=NET.players.splice(i,1)[0];
@@ -2394,7 +2534,7 @@ function netStartRaceHost(){ if(!NET.host) return;
   const base=[.92,.99,1.05][cf.diff], ck=[.92,.99,1.04][cf.diff], grid=[];
   for(let i=0;i<nAI;i++) grid.push({k:'a',car:pool[i%pool.length],look:packLook(aiLook(pool[i%pool.length])),name:names[i]||('Bot '+(i+1)),skill:r3(base+rand(-.03,.03)),corner:r3(ck+rand(-.02,.02)),react:r2(rand(0,.35))});
   humans.forEach(h=>grid.push({k:'h',id:h.id,car:h.car,look:h.look,name:h.name}));
-  const msg={t:'start',mode,track,laps:cf.laps,diff:cf.diff,grid};
+  NET.rid=(NET.rid|0)+1; const msg={t:'start',rid:NET.rid,mode,track,laps:cf.laps,diff:cf.diff,grid}; NET.startMsg=msg; NET.startT=performance.now();
   netBroadcast(msg); startRace(msg); netLobbySync(); }
 function netBackToRoom(){ netBroadcast({t:'room'}); toMenu(); go(3); netLobbySync(); }
 
@@ -2481,7 +2621,8 @@ function netFromHost(d){ if(!d||typeof d!=='object') return; NET.hostSeen=perfor
     if(G.state==='menu'){ if(d.race) netStatus('A race is already running. You will be on the grid for the next one.'); else if(NET.status.startsWith('A race')) netStatus(''); renderMenu(); }
     return; }
   if(d.t==='full'){ netFail({type:'full'}); return; }
-  if(d.t==='start'){ if(Array.isArray(d.grid)&&ONLINE_MODES.some(m=>m[0]===d.mode)&&d.grid.some(e=>e&&e.k==='h'&&e.id===NET.myId)){ NET.status=''; startRace(d); } return; }
+  if(d.t==='start'){ if(d.rid&&d.rid===NET.rid&&G.online) return;      // the host repeats a start until our car shows up; the first copy is enough
+    if(Array.isArray(d.grid)&&ONLINE_MODES.some(m=>m[0]===d.mode)&&d.grid.some(e=>e&&e.k==='h'&&e.id===NET.myId)){ NET.rid=d.rid|0; NET.status=''; startRace(d); } return; }
   if(d.t==='room'){ if(G.state!=='menu') toMenu(); go(3); return; }
   if(G.online&&scene) netEvent(d);
 }
@@ -2496,7 +2637,7 @@ function netEvent(d){ const p=G.player, car=n=>G.cars[n|0], close=(x,z)=>(x-p.x)
     case 'oil': if(isFinite(+d.x)&&isFinite(+d.z)) oilAt(+d.x,+d.z,null,d.k); break;
     case 'oilx': { const i=oils.findIndex(o=>o.k===d.k); if(i>=0){ scene.remove(oils[i].mesh); disposeTree(oils[i].mesh); oils.splice(i,1); } } break;
     case 'emp': if(isFinite(+d.x)&&isFinite(+d.z)){ ringAt(+d.x,+d.z); if(close(+d.x,+d.z)) SFX.zap(); } break;
-    case 'boom': G.stat.booms++; if(isFinite(+d.x)&&isFinite(+d.z)){ fxExplode(+d.x,+d.z,1); if(close(+d.x,+d.z)) SFX.boom(); } break;
+    case 'boom': G.stat.booms++; if(isFinite(+d.x)&&isFinite(+d.z)){ fxExplode(+d.x,+d.z,clamp(+d.s||1,1,3)); if(close(+d.x,+d.z)) SFX.boom(); } break;
     case 'elim': elimCar(car(d.n)); break;
     case 'win': { const c=car(d.n); if(c) winCar(c); } break;
     case 'gone': { const c=car(d.n); if(c&&!c.elim){ c.gone=true; c.elim=true; c.m.group.visible=false; showMsg(c.name+' left',1.4,'red'); } } break;
@@ -2516,7 +2657,9 @@ function netCar(){ if(NET.host) netLobbySync(); else netSend({t:'car',car:sel.ca
 // 20 updates a second: the host sends every car and missile, each guest sends only its own car
 function netTick(){ if(!G.online||!NET.on) return; const now=performance.now(); if(now-NET.lastSend<50) return; NET.lastSend=now;
   if(NET.host){ if(!NET.conns.size) return;
-    netBroadcast({t:'s',e:r2(G.elimT),c:G.cars.filter(c=>!c.elim).map(netPack),m:missiles.map(m=>[m.id,r2(m.x),r2(m.z),r3(m.mesh.rotation.y),m.target?m.target.nid:-1,r2(m.vx||0),r2(m.vz||0)])}); }
+    // for the first 25 s of a race, any player whose car has not shown up yet gets the start again every 1.5 s, in case it was lost on the way
+    if(NET.startMsg&&now-NET.startT<25000&&now-(NET.resendT||0)>1500){ NET.resendT=now; for(const c of G.cars) if(c.peer&&!c.isPlayer&&!c.net&&!c.gone) netTo(c,NET.startMsg); }
+    netBroadcast({t:'s',e:r2(G.elimT),c:G.cars.filter(c=>!c.elim).map(netPack),m:missiles.map(m=>[m.id,r2(m.x),r2(m.z),r3(m.mesh.rotation.y),m.target?m.target.nid:-1,r2(m.vx||0),r2(m.vz||0),m.kind|0,r2(m.y||.9)])}); }
   else { const p=G.player; if(p&&!p.elim) netSend({t:'p',c:netPack(p)}); } }
 function netPack(c){ const s=c.remote&&c.net?c.net:c, ch=c.driftCharge, lv=c.drifting?(ch>=2.6?3:ch>=1.5?2:ch>=.7?1:0):0;
   const f=(c.drifting?1:0)|(c.driftDir>0?2:0)|(c.boostT>0?4:0)|(c.spinT>0?8:0)|(c.shieldT>0?16:0)|(c.ramT>0?32:0)|(c.zapT>0?64:0)|(c.finished?128:0)|(c.ctrl.br>0?256:0)|(c.draft>.5?512:0)|((c.remote?c.netItem:(c.item||c.roulette>0))?1024:0)|(lv<<11);
@@ -2540,8 +2683,8 @@ function netProxy(c,dt){ const n=c.net; if(!n){ c.speed=0; return; }
   const fx=Math.sin(c.h), fz=Math.cos(c.h); c.speed=Math.hypot(c.vx,c.vz); c.vf=c.vx*fx+c.vz*fz; c.vl=c.vx*fz-c.vz*fx; c.accel=0; }
 function netMissiles(list){ const seen=new Set(), now=performance.now();
   for(const a of list){ if(!Array.isArray(a)) continue; const id=a[0]|0; seen.add(id); let m=missiles.find(q=>q.id===id);
-    if(!m){ m={id,mesh:missileMesh(),x:+a[1]||0,z:+a[2]||0}; scene.add(m.mesh); missiles.push(m); }
-    m.tx=+a[1]||0; m.tz=+a[2]||0; m.h=+a[3]||0; m.target=a[4]>=0?G.cars[a[4]|0]||null:null; m.vx=+a[5]||0; m.vz=+a[6]||0; m.t=now; }
+    if(!m){ m={id,kind:a[7]===1?1:0,mesh:a[7]===1?lbombMesh():missileMesh(),x:+a[1]||0,z:+a[2]||0}; scene.add(m.mesh); missiles.push(m); }
+    m.y=clamp(+a[8]||.9,.5,12); m.tx=+a[1]||0; m.tz=+a[2]||0; m.h=+a[3]||0; m.target=a[4]>=0?G.cars[a[4]|0]||null:null; m.vx=+a[5]||0; m.vz=+a[6]||0; m.t=now; }
   for(let i=missiles.length-1;i>=0;i--){ if(!seen.has(missiles[i].id)){ scene.remove(missiles[i].mesh); disposeTree(missiles[i].mesh); missiles.splice(i,1); } } }
 
 /* ---- lobby screen ---- */
@@ -2678,13 +2821,18 @@ function rmPost(to,msg){ if(!RM.chan) return;
   if(msg.t==='s'||msg.t==='p'){ RM.u=msg; RM.un=(RM.un+1)%1e9; } else RM.pend.push({s:++RM.seq,to,m:msg,a:0});
   RM.dirty=true; rmFlush(); }
 function rmFlush(force){ const ch=RM.chan; if(!ch||RM.role==='x') return; const now=performance.now(); if(!force&&now-RM.flushT<45) return;
-  // a message stays up for 4 seconds of time this page was actually running, so a long stall (building a track) cannot expire it unsent
-  const dt=Math.min(now-(RM.ageT||now),150), n0=RM.q.length; RM.ageT=now; for(const e of RM.q) e.a+=dt; RM.q=RM.q.filter(e=>e.a<4000); if(RM.q.length!==n0) RM.dirty=true;
+  // Delivery is confirmed: each side publishes the last message number it has read from the other, and a message stays
+  // up until everyone it was for has confirmed it (or, as a last resort, for 20 s of time this page was actually running).
+  // A page that stalls for a few seconds (building a track on a slow phone) still gets every message when it wakes up.
+  const isHost=RM.role==='h', open=isHost?[...RM.conns.entries()].filter(([k,c])=>c.open):[], peers=isHost?open.length>0:!!(RM.guest&&RM.guest.open);
+  const acked=e=>isHost?(()=>{ const to=open.filter(([k])=>e.to==='*'||e.to===k); return to.length>0&&to.every(([k,c])=>(c.ak|0)>=e.s); })():(RM.hostAk|0)>=e.s;
+  const dt=Math.min(now-(RM.ageT||now),150), n0=RM.q.length; RM.ageT=now; for(const e of RM.q) e.a+=dt; RM.q=RM.q.filter(e=>e.a<(peers?20000:4000)&&!(peers&&acked(e))); if(RM.q.length!==n0) RM.dirty=true;
   let size=rmBytes(RM.q.map(e=>[e.s,e.to,e.m]));
-  while(RM.pend.length){ const e=RM.pend[0], b=rmBytes([e.s,e.to,e.m])+1; if(RM.q.length&&size+b>2300) break; RM.pend.shift(); e.a=0; RM.q.push(e); size+=b; RM.dirty=true; }
+  while(RM.pend.length){ const e=RM.pend[0], b=rmBytes([e.s,e.to,e.m])+1; if(RM.q.length&&size+b>2100) break; RM.pend.shift(); e.a=0; RM.q.push(e); size+=b; RM.dirty=true; }
   if(!RM.dirty) return; RM.dirty=false; RM.flushT=now;
   const u=RM.u&&rmBytes(RM.u)<=1500?RM.u:null;
-  try{ ch.presence({g:1,c:RM.code,r:RM.role,j:RM.j,q:RM.q.map(e=>[e.s,e.to,e.m]),u,un:RM.un}).catch(()=>{}); }catch(_){} }
+  const ak=isHost?open.map(([k,c])=>[k,c.st.seq|0]):((RM.seen.get(RM.host)||{}).seq|0);
+  try{ ch.presence({g:1,c:RM.code,r:RM.role,j:RM.j,q:RM.q.map(e=>[e.s,e.to,e.m]),u,un:RM.un,ak}).catch(()=>{}); }catch(_){} }
 // hand over what is new in someone's presence: unseen messages addressed to us, then the newest car packet
 function rmRead(pr,st,me,deliver){ if(!st||st.pr===pr) return; st.pr=pr; const give=m=>{ try{ deliver(JSON.parse(JSON.stringify(m))); }catch(e){ console.error(e); } };
   if(Array.isArray(pr.q)){ let mx=st.seq; for(const e of pr.q){ if(!Array.isArray(e)) continue; const s=e[0]|0; if(s<=st.seq) continue; if(s>mx) mx=s; if((e[1]==='*'||e[1]===me)&&e[2]&&typeof e[2]==='object') give(e[2]); } st.seq=mx; }
@@ -2703,13 +2851,14 @@ function rmPump(){ const ch=RM.chan; if(!ch||RM.role==='x'||!RM.role) return; co
         c.send=msg=>rmPost(key,msg);
         c.close=()=>{ if(!c.open) return; c.open=false; RM.conns.delete(key); RM.dead.add(key); if(NET.host) rmPost(key,{t:'kick'}); c.emit('close'); };      // closing the whole room needs no kick: guests see the host leave
         RM.conns.set(key,c); netAccept(c); c.emit('open'); }
-      c.miss=0; if(c.open) rmRead(pr,c.st,'h',d=>{ if(c.open) c.emit('data',d); }); }
+      c.miss=0; c.ak=pr.ak|0; const s0=c.st.seq; if(c.open) rmRead(pr,c.st,'h',d=>{ if(c.open) c.emit('data',d); }); if(c.st.seq!==s0) RM.dirty=true; }
     for(const [k,c] of [...RM.conns]){ const pr=here.get(c.label); if(pr&&pr.r==='g'&&c.label+'.'+String(pr.j||'')===k) continue;
       if(!c.miss) c.miss=now; else if(now-c.miss>3000) rmDrop(k,c); }
     for(const k of [...RM.dead]){ const i=k.lastIndexOf('.'), pr=here.get(k.slice(0,i)); if(!pr||String(pr.j||'')!==k.slice(i+1)) RM.dead.delete(k); }
   } else if(RM.role==='g'&&RM.guest){ const c=RM.guest, pr=here.get(RM.host);
-    if(pr&&pr.r==='h'){ RM.hostMiss=0; rmRead(pr,RM.seen.get(RM.host),RM.addr,d=>{ if(!c.open) return;
-        if(d.t==='kick'){ c.open=false; RM.guest=null; c.emit('close',{type:'lost'}); } else c.emit('data',d); }); }
+    if(pr&&pr.r==='h'){ RM.hostMiss=0; const a=Array.isArray(pr.ak)?pr.ak.find(x=>Array.isArray(x)&&x[0]===RM.addr):null; RM.hostAk=a?a[1]|0:0; const hs=RM.seen.get(RM.host), s0=hs?hs.seq:0;
+      rmRead(pr,hs,RM.addr,d=>{ if(!c.open) return;
+        if(d.t==='kick'){ c.open=false; RM.guest=null; c.emit('close',{type:'lost'}); } else c.emit('data',d); }); if(hs&&hs.seq!==s0) RM.dirty=true; }
     else if(!RM.hostMiss) RM.hostMiss=now;
     else if(now-RM.hostMiss>3000&&c.open){ c.open=false; RM.guest=null; c.emit('close',{type:'hostgone'}); } }
   rmFlush(); }
@@ -2887,12 +3036,13 @@ function renderCarShop(){ const C=CAREER, sp=C.spins|0;
   $('#spGo').disabled=spinning||!sp; $('#spGo').textContent=sp?'Spin':'No spins left';
   $('#spBuy1').disabled=spinning||C.credits<SPIN_PRICE; $('#spBuy5').disabled=spinning||C.credits<SPIN5_PRICE;
   $('#spBuy1').textContent='Buy 1 spin · '+SPIN_PRICE.toLocaleString()+' CR'; $('#spBuy5').textContent='Buy 5 spins · '+SPIN5_PRICE.toLocaleString()+' CR';
-  $('#spOdds').innerHTML=SPIN_ODDS.map((p,t)=>`<i class="t${t}">${CAR_TIERS[t]} ${p}%</i>`).join('')+`<span>A car you already own pays back ${SPIN_BACK.map((v,t)=>CAR_TIERS[t]+' '+v.toLocaleString()).join(', ')} CR.</span>`;
+  const pl=pityLeft(); $('#spOdds').innerHTML=SPIN_ODDS.map((p,t)=>`<i class="t${t}">${CAR_TIERS[t]} ${p}%</i>`).join('')+`<span class="pity">${pl===1?'Your next spin is a guaranteed Epic or Legendary.':'Epic or Legendary guaranteed within '+pl+' spins.'}</span>`
+    +`<span>You only get a car you already own once you have every car of that rarity. Then it pays ${SPIN_BACK.map((v,t)=>CAR_TIERS[t]+' '+v.toLocaleString()).join(', ')} CR instead.</span>`;
   if(!spinning){ reelShow(spinLast?spinLast.i:null); $('#spResult').textContent=spinLast?(spinLast.dup?'Already in your garage: +'+spinLast.back.toLocaleString()+' CR instead.':'New car! The '+CARS[spinLast.i].name+' is in your garage.'):''; $('#spResult').className='spres'+(spinLast&&!spinLast.dup?' new':''); }
   $('#csAll').innerHTML=CAR_TIERS.map((t,ti)=>{ const list=CARS.filter(c=>c.tier===ti); return `<div class="collrow"><span>${t} ${list.filter(c=>CAREER.own[c.id]).length}/${list.length}</span>${list.map(c=>`<i class="${CAREER.own[c.id]?'on':''}">${c.name}</i>`).join('')}</div>`; }).join('')
     +'<p class="sub">Prize cars never come from spins. They are won in missions and the campaign.</p>'; }
 // the result is decided and saved the moment Spin is pressed; the reel only plays it out
-function doSpin(){ if(spinning) return; const r=spinCar(); if(!r) return; audioInit(); spinning=true; spinLast=null; renderCarShop(); $('#spResult').textContent=''; $('#spResult').className='spres';
+function spinWheel(){ if(spinning) return; const r=spinCar(); if(!r) return; audioInit(); spinning=true; spinLast=null; renderCarShop(); $('#spResult').textContent=''; $('#spResult').className='spres';
   const pool=CARS.map((c,i)=>i).filter(i=>CARS[i].tier<4); let delay=reduceMotion?120:45, k=0;
   const tick=()=>{ if($('#cshop').hidden){ spinning=false; spinLast=r; return; }
     if(delay<(reduceMotion?200:330)){ let i; do{ i=pick(pool); }while(i===k); k=i; reelShow(i); tone(500+Math.random()*500,.035,'square',.05); delay*=reduceMotion?1.5:1.13; setTimeout(tick,delay); return; }
@@ -2946,7 +3096,7 @@ function careerBoot(){
   $('#saveBtn').onclick=openTitle; $('#cSwitch').onclick=openTitle; $('#tiBack').onclick=backTitle;
   $('#cpGo').onclick=()=>startCamp(campSel); $('#cpCarBtn').onclick=()=>{ const i=campSel; go(2); menuCamp=i; renderMenu(); };
   $('#cshopBtn').onclick=openCarShop; $('#csClose').onclick=()=>{ $('#cshop').hidden=true; };
-  $('#spGo').onclick=doSpin; $('#spBuy1').onclick=()=>{ if(buySpins(1)){ audioInit(); SFX.pickup(); renderCarShop(); renderMenu(); } }; $('#spBuy5').onclick=()=>{ if(buySpins(5)){ audioInit(); SFX.pickup(); renderCarShop(); renderMenu(); } }; $('#stGo').onclick=starterDone;
+  $('#spGo').onclick=spinWheel; $('#spBuy1').onclick=()=>{ if(buySpins(1)){ audioInit(); SFX.pickup(); renderCarShop(); renderMenu(); } }; $('#spBuy5').onclick=()=>{ if(buySpins(5)){ audioInit(); SFX.pickup(); renderCarShop(); renderMenu(); } }; $('#stGo').onclick=starterDone;
   $('#tiNew').onclick=()=>{ const raw=$('#tiName').value.trim(); if(!raw){ $('#tiStatus').textContent='Type a driver name for the new career first.'; $('#tiName').focus(); return; } if(careerCreate(raw)){ $('#tiName').value=''; closeTitle(); } };
   $('#tiName').addEventListener('keydown',e=>{ if(e.key==='Enter') $('#tiNew').click(); });
   $('#gaClose').onclick=()=>{ $('#garage').hidden=true; clearInterval(shopTick); };
@@ -2986,8 +3136,13 @@ sel.mode=clamp(sel.mode|0,0,MODES.length-1); sel.track=clamp(sel.track|0,0,TRACK
 if(TESTING){ if(!SAVES.cur){ const id=newId(); SAVES.list.push({id,name:NET.name,ts:0}); SAVES.cur=id; store.set('saves',SAVES); } if(!window.__swStarter) SALE_CARS.forEach(i=>{ CAREER.own[CARS[i].id]=1; }); }
 if(slotOf(SAVES.cur)) NET.name=cleanName(slotOf(SAVES.cur).name);
 fixCar(); setSound(AU.on); setShowCar(sel.car); netBoot(); careerBoot(); rmInit(); cloudInit(); renderMenu(); if(!TESTING||window.__swStarter) openTitle(); applyQuality(); requestAnimationFrame(frame);
-window.__sw={get CAREER(){return CAREER;},spinCar,buySpins,rollCar,doSpin,SPIN_ODDS,openTitle,backTitle,campTrack,startCamp,trackData,CAMP_RIVALS,MISSIONS,dailyNow,claimMission,claimDaily,missionsReady,go,get SAVES(){return SAVES;},ownedCars,careerCreate,careerOpen,DIFFS,LB,PROFILE,RM,CLOUD,PIT,CARS,TRACKS,MODES,SKINS,PAINTS,lookOf,setLook,shopStock,buyItem,openShop,G,sel,Q,NET,startRace,simulate,applyQuality,useItem,netStartRaceHost,ff(sec){ for(let i=0;i<sec*60;i++) simulate(1/60); },get T(){return T;},get scene(){return scene;},debug:{boxes:()=>boxes.length,oils:()=>oils.length,missiles:()=>missiles.length}};
+window.__sw={get CAREER(){return CAREER;},get AU(){return AU;},ENG_KIND,ENG,engLoop,engUpdate,leaderBut,pityLeft,spinCar,buySpins,rollCar,spinWheel,SPIN_ODDS,openTitle,backTitle,campTrack,startCamp,trackData,CAMP_RIVALS,MISSIONS,dailyNow,claimMission,claimDaily,missionsReady,go,get SAVES(){return SAVES;},ownedCars,careerCreate,careerOpen,DIFFS,LB,PROFILE,RM,CLOUD,PIT,CARS,TRACKS,MODES,SKINS,PAINTS,lookOf,setLook,shopStock,buyItem,openShop,G,sel,Q,NET,startRace,simulate,applyQuality,useItem,netStartRaceHost,ff(sec){ for(let i=0;i<sec*60;i++) simulate(1/60); },get T(){return T;},get scene(){return scene;},debug:{boxes:()=>boxes.length,oils:()=>oils.length,missiles:()=>missiles.length,list:()=>missiles}};
 })();
 </script>
 
-</body></html>
+<noscript><p style="color:#f4f1e8;padding:24px">Sideways GP needs JavaScript and WebGL.</p></noscript>
+<script>
+if('serviceWorker' in navigator && location.protocol==='https:'){ addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{})); }
+</script>
+</body>
+</html>
