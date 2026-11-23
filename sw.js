@@ -1,5 +1,5 @@
 // Offline support. Bump VERSION when the game files change so players get the new build.
-const VERSION = 'sgp-v11';
+const VERSION = 'sgp-v12';
 const CORE = ['/', '/index.html', '/vendor/three-r128.min.js', '/vendor/peerjs-1.5.5.min.js', '/config.js', '/manifest.webmanifest', '/icons/icon.svg', '/icons/icon-192.png'];
 
 self.addEventListener('install', e => {

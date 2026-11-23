@@ -33,6 +33,9 @@ Ejecútalo dentro de esta carpeta y acepta las opciones por defecto.
 - **Coches premio.** Cuatro coches no se venden: se ganan en misiones (Apex Comet, Ironclad Titan) y en la campaña (Night Specter en la etapa 25, Sideways One en la 50).
 - **Paint shop.** Vende 4 skins y 6 pinturas y cambia cada 12 horas, con la hora real, aunque el juego esté cerrado. Lo que compras vale para todos tus coches.
 - **Misiones.** La pantalla **Missions** tiene tres metas diarias (se renuevan cada 24 horas; completar las tres da un extra) y 19 misiones en cuatro niveles: Easy, Medium, Hard y Extreme. Cuanto más difíciles, más créditos y tiradas, y algunas dan un coche premio.
+- **Barra de arriba.** En todas las pantallas del menú: tu **nivel de piloto** (LV), cuántos coches tienes, tus tiradas, tus créditos y el botón **Shop**.
+- **Nivel de piloto.** Subes de nivel corriendo, ganando créditos y banderas de la campaña. Cada nivel nuevo te da **1 tirada** y créditos (500 × el nivel).
+- **Valoración del coche (Rating).** Cada coche tiene un número de 200 a 1000 según lo rápido que es. En la pantalla del coche ves también sus números: velocidad punta en km/h, aceleración, manejo, derrape y peso.
 - **Créditos (CR).** Cada carrera paga créditos: más cuanto mejor quedes y cuanto más alta la dificultad.
 - **Dificultad y rivales.** En la carrera rápida eliges de 1 a 11 rivales y cinco niveles: Rookie, Easy, Normal, Hard y Legend. La dificultad está justo encima de **Start race**, en la pantalla del coche. La campaña tiene su propia dificultad, en la pantalla de la campaña, que cambia el ritmo de los diez rivales y los créditos de cada bandera.
 - **Volver a tus partidas.** El botón con tu nombre, arriba en todas las pantallas del menú (o **Switch career** en **Career**), abre la lista de partidas. **Back** la cierra sin cambiar nada.
@@ -48,7 +51,7 @@ El motor se genera en el momento a partir de cómo suena uno de verdad: cada exp
 
 ## Campaña
 
-Cincuenta etapas en circuitos largos (de 4,6 a 6,9 km) que **solo existen en la campaña**. Siempre corres contra los mismos diez rivales: Vega, Marlow, Tanaka, Duarte, Okoro, Lindqvist, Reyes, Novak, Brandt y Sato, cada vez un poco más rápidos. Terminar entre los tres primeros abre la etapa siguiente: 1.º gana tres banderas, 2.º dos y 3.º una. Cada bandera nueva paga créditos.
+La campaña es un camino de etapas unidas: las que ya superaste se marcan en amarillo. Cada etapa te dice la **valoración recomendada** y la de tu coche (en verde si llegas, en rojo si no). Cincuenta etapas en circuitos largos (de 4,6 a 6,9 km) que **solo existen en la campaña**. Siempre corres contra los mismos diez rivales: Vega, Marlow, Tanaka, Duarte, Okoro, Lindqvist, Reyes, Novak, Brandt y Sato, cada vez un poco más rápidos. Terminar entre los tres primeros abre la etapa siguiente: 1.º gana tres banderas, 2.º dos y 3.º una. Cada bandera nueva paga créditos.
 
 ## Modos
 

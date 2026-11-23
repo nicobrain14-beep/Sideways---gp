@@ -125,7 +125,7 @@ input.code{text-transform:uppercase;letter-spacing:.3em;font-family:var(--displa
 .arrow{flex:none;width:42px;height:42px;border:1px solid var(--line);font-size:22px;font-weight:700}
 .arrow:hover{border-color:var(--flag);color:var(--flag)}
 .stats{display:grid;gap:5px}
-.stat{display:grid;grid-template-columns:118px 1fr;gap:8px;align-items:center;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.stat{display:grid;grid-template-columns:118px 1fr 92px;gap:8px;align-items:center;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
 .stat i{display:block;height:8px;background:var(--panel-2);position:relative;transform:skewX(-20deg)}
 .stat i b{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,var(--flag),var(--hot));transition:width .25s}
 .chips{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px}
@@ -135,6 +135,28 @@ input.code{text-transform:uppercase;letter-spacing:.3em;font-family:var(--displa
 .carrow{grid-column:1/-1;display:flex;gap:10px 14px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 .crchip{font-family:var(--display);font-style:italic;font-weight:800;font-size:17px;color:var(--flag);border:1px solid var(--flag);padding:3px 10px;transform:skewX(-10deg);white-space:nowrap;background:rgba(15,18,26,.6)}
 .sheet.wide{max-width:780px}
+.status{display:flex;align-items:center;gap:7px;margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
+.navrow{flex-basis:100%;display:flex;align-items:center;gap:8px;min-width:0}
+.navrow .steps{margin-left:0;flex:1;min-width:0}
+.lvchip{display:grid;grid-template-columns:auto auto;grid-template-rows:auto 5px;column-gap:5px;align-items:end;padding:3px 10px 4px;background:var(--hot);color:#fff;transform:skewX(-10deg);font-family:var(--display);font-style:italic;line-height:1}
+.lvchip span{font-size:12px;font-weight:800;opacity:.85} .lvchip b{font-size:22px;font-weight:900}
+.lvchip i{grid-column:1/-1;height:4px;background:rgba(0,0,0,.35);margin-top:2px} .lvchip u{display:block;height:100%;background:#fff;text-decoration:none}
+.stchip{padding:5px 10px;border:1px solid var(--line);background:rgba(15,18,26,.6);font-weight:700;font-size:15px;letter-spacing:.04em;color:var(--ink);white-space:nowrap}
+.stchip.spin.has{border-color:#d99cff;color:#e7c4ff}
+.shopbtn{padding:5px 18px;background:var(--go);color:#0b140c;font-family:var(--display);font-style:italic;font-weight:900;font-size:19px;transform:skewX(-10deg)}
+.shopbtn:hover,.lvchip:hover,.stchip:hover{filter:brightness(1.12)}
+.rate{display:flex;flex-direction:column;align-items:center;padding:4px 12px;border:2px solid var(--line);transform:skewX(-8deg);line-height:1}
+.rate small{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)} .rate b{font-family:var(--display);font-style:italic;font-weight:900;font-size:26px}
+.rate.t1{border-color:var(--ice)} .rate.t2{border-color:#d99cff} .rate.t3{border-color:var(--flag)} .rate.t4{border-color:var(--hot)}
+.stat em{font-style:normal;color:var(--ink);text-align:right;letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.route{position:relative}
+.route canvas{position:absolute;left:0;top:0;pointer-events:none}
+.route .campgrid{position:relative;grid-template-columns:repeat(5,minmax(0,1fr));gap:22px 14px;padding:4px 6px}
+.cnode.next{border-color:var(--go);box-shadow:0 0 14px rgba(73,224,122,.45)}
+.recbox{display:flex;gap:10px}
+.recbox div{display:flex;flex-direction:column;padding:4px 12px;border:1px solid var(--line);background:rgba(255,255,255,.04)}
+.recbox small{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)} .recbox b{font-family:var(--display);font-style:italic;font-weight:900;font-size:24px}
+.recbox b.ok{color:var(--go)} .recbox b.low{color:var(--hot)}
 .spinbox{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:12px;align-items:stretch}
 .shopcard.reel{padding:10px;border-width:2px}
 .shopcard.reel canvas{aspect-ratio:336/152}
@@ -173,13 +195,13 @@ input.code{text-transform:uppercase;letter-spacing:.3em;font-family:var(--displa
 #msList .lbl{display:block;margin-top:12px}
 .lbl.mt1{color:var(--ice)} .lbl.mt2{color:#d99cff} .lbl.mt3{color:var(--hot)}
 .campgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:6px}
-.cnode{display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;background:rgba(255,255,255,.05);border:2px solid var(--line);transform:skewX(-8deg)}
+.cnode{display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;background:#161a23;border:2px solid var(--line);transform:skewX(-8deg)}
 .cnode b{font-family:var(--display);font-style:italic;font-weight:900;font-size:21px;line-height:1}
 .cnode span{display:flex;gap:2px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);height:8px;align-items:center}
 .cnode i{width:9px;height:7px;background:rgba(255,255,255,.18)} .cnode i.on{background:var(--flag)}
 .cnode.fin{border-color:rgba(255,59,78,.6)}
-.cnode[aria-pressed="true"]{border-color:var(--flag);background:rgba(40,33,10,.9)}
-.cnode.lock{opacity:.4}
+.cnode[aria-pressed="true"]{border-color:var(--flag);background:#28210a}
+.cnode.lock{opacity:1;color:rgba(244,241,232,.35);border-color:rgba(255,255,255,.08)}
 #cpMap{width:100%;height:auto;max-height:170px;object-fit:contain;background:rgba(0,0,0,.25)}
 .rivals{display:flex;flex-wrap:wrap;gap:5px}
 .rivals i{font-style:normal;font-size:15px;font-weight:600;padding:2px 8px 2px 4px;border:1px solid var(--line);display:flex;align-items:center;gap:5px}
@@ -291,6 +313,13 @@ tr.me td{color:var(--flag);font-weight:700}
   .saverow .btn{grid-row:auto!important;grid-column:auto!important;justify-self:stretch}
 }
 @media (max-height:740px){ #cpMap{max-height:118px} }
+@media (max-width:640px){
+  .status{margin-left:0;flex-basis:100%;justify-content:flex-start;gap:5px}
+  .stchip{padding:4px 7px;font-size:14px} .shopbtn{padding:4px 12px;font-size:17px} .lvchip b{font-size:19px}
+  .navrow{flex-wrap:wrap} .navrow .steps{flex-basis:100%;order:3}
+  .stat{grid-template-columns:96px 1fr 78px}
+  .route .campgrid{gap:16px 8px}
+}
 </style>
 </head>
 <body>
@@ -300,6 +329,14 @@ tr.me td{color:var(--flag);font-weight:700}
   <div id="menu" class="layer">
     <header class="mhead">
       <div class="logo">SIDEWAYS<span>GP</span><small>Arcade drift racing</small></div>
+      <div class="status" aria-label="Your career">
+        <button type="button" class="lvchip" id="lvBtn" title="Driver level: race to level up. Every level pays a car spin and credits."><span>LV</span><b id="lvNum">1</b><i><u id="lvBar"></u></i></button>
+        <button type="button" class="stchip" id="carsChip" title="Your cars">0 cars</button>
+        <button type="button" class="stchip spin" id="spinChip" title="Car spins">0 spins</button>
+        <span class="crchip" id="crChip" title="Credits">0 CR</span>
+        <button type="button" class="shopbtn" id="shopBtn">Shop</button>
+      </div>
+      <div class="navrow">
       <nav class="steps" aria-label="Sections">
         <button type="button" data-step="6">Home</button>
         <button type="button" data-step="0">Race</button>
@@ -310,9 +347,9 @@ tr.me td{color:var(--flag);font-weight:700}
         <button type="button" data-step="5">Ranks</button>
       </nav>
       <button type="button" class="ghost savechip" id="saveBtn" title="Switch to another saved career">Careers</button>
-      <span class="crchip" id="crChip" title="Credits">0 CR</span>
       <button type="button" class="ghost" id="gfxBtn">Graphics: High</button>
       <button type="button" class="ghost" id="muteBtn">Sound on</button>
+      </div>
     </header>
 
     <section class="step" id="stepHome">
@@ -338,14 +375,15 @@ tr.me td{color:var(--flag);font-weight:700}
             <h3 id="cpName"></h3>
             <canvas id="cpMap" width="520" height="210"></canvas>
             <p id="cpMeta"></p>
+            <div class="recbox"><div><small>Suggested rating</small><b id="cpRec">0</b></div><div><small>Your car</small><b id="cpMine">0</b></div></div>
             <div class="opt"><span class="lbl">Campaign difficulty</span><div class="seg wrap" id="cpDiff"></div></div>
-            <p id="cpDiffNote"></p>
-            <p id="cpCar"></p>
             <div class="row2"><button type="button" class="btn" id="cpGo">Race this stage</button><button type="button" class="btn sec" id="cpCarBtn">Change car</button></div>
+            <p id="cpCar"></p>
+            <p id="cpDiffNote"></p>
             <span class="lbl">Your ten rivals</span>
             <div class="rivals" id="cpRivals"></div>
           </div>
-          <div class="obox"><span class="lbl">Stages</span><div class="campgrid" id="cpGrid"></div></div>
+          <div class="obox"><span class="lbl">Route<em id="cpFlags"></em></span><div class="route" id="cpRoute"><canvas id="cpLines" aria-hidden="true"></canvas><div class="campgrid" id="cpGrid"></div></div></div>
         </div>
       </div>
     </section>
@@ -431,6 +469,7 @@ tr.me td{color:var(--flag);font-weight:700}
         <div class="carname">
           <button type="button" class="arrow" id="carPrev" aria-label="Previous car">&#9664;</button>
           <div style="flex:1;min-width:0"><h2 id="carName"></h2><p id="carTag"></p></div>
+          <div class="rate" id="carRate"><small>Rating</small><b>0</b></div>
           <button type="button" class="arrow" id="carNext" aria-label="Next car">&#9654;</button>
         </div>
         <div class="stats" id="carStats"></div>
@@ -568,7 +607,7 @@ tr.me td{color:var(--flag);font-weight:700}
       </div>
       <span class="lbl">Your collection</span>
       <div id="csAll"></div>
-      <div class="row"><button type="button" class="cta" id="csClose">Done</button></div>
+      <div class="row"><button type="button" class="cta" id="csClose">Done</button><button type="button" class="cta sec" id="csPaint">Paint shop</button></div>
     </div>
   </div>
 
@@ -583,7 +622,7 @@ tr.me td{color:var(--flag);font-weight:700}
       <div class="lookrow"><span>Detail</span><div class="swatches" id="gaDetail"></div></div>
       <div class="lookrow"><span>Skin</span><div class="skinrow" id="gaSkin"></div></div>
       <p class="sub" id="gaNone">You have no skins yet. Buy one above and it appears here, ready for any car.</p>
-      <div class="row"><button type="button" class="cta" id="gaClose">Done</button></div>
+      <div class="row"><button type="button" class="cta" id="gaClose">Done</button><button type="button" class="cta sec" id="gaCars">Car spins</button></div>
     </div>
   </div>
 
@@ -798,6 +837,9 @@ function rectPts(a,b,R){ const p=[], D=Math.PI/180, arc=(cx,cy,a0)=>{ for(let k=
   for(let i=1;i<=4;i++) p.push([a*i/4,0]); arc(a,R,-90); p.push([a+R,R+b/2]); p.push([a+R,R+b]); arc(a,R+b,0);
   for(let i=3;i>=0;i--) p.push([a*i/4,2*R+b]); arc(0,R+b,90); p.push([-R,R+b/2]); p.push([-R,R]); arc(0,R,180);
   return p.map(q=>[q[0],-q[1]]); }
+// a single number for how quick a car is, 200 to 1000: mostly top speed, then acceleration and handling
+function carRating(c){ const n=(v,a,b)=>clamp((v-a)/(b-a),0,1); return Math.round(200+800*(.55*n(c.top,47,64)+.2*n(c.acc,17.5,26)+.2*n(c.hand,.85,1.24)+.05*n(c.drift,.8,1.4))); }
+const campRec = i => Math.round(360+i*9);      // the rating the campaign suggests for stage i
 const STATS = [['Top speed','top',45,65],['Acceleration','acc',16,26.5],['Handling','hand',.75,1.26],['Drift','drift',.7,1.42],['Weight','mass',.72,1.34]];
 const MODES = [
  {id:'gp',     tag:'Classic',  name:'Grand Prix',        blurb:'Full grid, power boxes on. First across the line after the last lap wins.'},
@@ -888,7 +930,7 @@ function dailyNow(){ const day=Math.floor(shopClock()/86400000), C=CAREER; if(C.
 function claimDaily(k){ const dn=dailyNow(), C=CAREER; let cr=0;
   if(k==='combo'){ if(!dn.combo||dn.comboGot) return 0; cr=1500; } else { const g=dn.goals.find(x=>x.k===k); if(!g||g.got||g.v<g.n) return 0; cr=g.cr; }
   C.daily.claimed[k]=1; C.credits+=cr; C.earned+=cr; if(k==='combo') C.spins=(C.spins|0)+1; saveCareer(); return cr; }
-function claimMission(id){ const m=MISSIONS.find(x=>x.id===id), C=CAREER; if(!m||C.claimed[id]||m.v(C)<m.n) return false; C.claimed[id]=1; C.credits+=m.cr; C.earned+=m.cr; C.spins=(C.spins|0)+MISSION_SPINS[m.t]; if(m.car) C.own[m.car]=1; saveCareer(); return true; }
+function claimMission(id){ const m=MISSIONS.find(x=>x.id===id), C=CAREER; if(!m||C.claimed[id]||m.v(C)<m.n) return false; C.claimed[id]=1; C.credits+=m.cr; C.earned+=m.cr; C.spins=(C.spins|0)+MISSION_SPINS[m.t]; if(m.car) C.own[m.car]=1; saveCareer(); levelCheck(); return true; }
 function missionsReady(){ const C=CAREER, dn=dailyNow(); return MISSIONS.filter(m=>!C.claimed[m.id]&&m.v(C)>=m.n).length+dn.goals.filter(g=>!g.got&&g.v>=g.n).length+(dn.combo&&!dn.comboGot?1:0); }
 const ITEMS = {
  nitro:  {name:'Nitro',     col:'#39d9ff', icon:'M4 18l8-6-8-6v12zm9 0l8-6-8-6v12z'},
@@ -1316,12 +1358,18 @@ const MISSIONS = [   // t: how hard; v: progress so far; n: target; cr: credits;
  {id:'tall',t:2,name:'Win on every open circuit',n:TRACKS.length,v:circuitsWon,cr:15000},{id:'c25',t:2,name:'Clear 25 campaign stages',n:25,v:()=>campCleared(),cr:15000},
  {id:'e50',t:3,name:'Finish all fifty laps of Endurance 50',n:1,v:C=>C.feat.endu50|0,cr:25000,car:'titan'},{id:'l3',t:3,name:'Win 3 races on Legend',n:3,v:C=>C.feat.legend|0,cr:30000},{id:'c50',t:3,name:'Finish the campaign',n:CAMP_N,v:()=>campCleared(),cr:50000}
 ];
-function careerNew(){ return {v:1,ts:0,credits:1500,earned:0,spent:0,races:0,wins:0,podiums:0,knock:0,dist:0,top:0,time:0,driftBest:0,driftLong:0,boosts:0,items:0,hits:0,spun:0,crashes:0,bumps:0,pits:0,
+// driver level: experience from races, credits earned and campaign flags; each new level pays a spin and credits
+const xpOf = C => Math.round((C.races|0)*60+(C.earned||0)/12+Object.values(C.camp||{}).reduce((a,b)=>a+(b|0),0)*40);
+function levelOf(C){ let xp=xpOf(C), lv=1, need=400; while(xp>=need&&lv<99){ xp-=need; lv++; need=400+(lv-1)*120; } return {lv,xp,need}; }
+const lvReward = L => 500*L;
+function levelCheck(){ const C=CAREER, L=levelOf(C).lv, got=[]; while((C.lvlPaid|0)<L){ C.lvlPaid=(C.lvlPaid|0)+1; const cr=lvReward(C.lvlPaid); C.credits+=cr; C.spins=(C.spins|0)+1; got.push(C.lvlPaid); } if(got.length) saveCareer(); return got; }
+function careerNew(){ return {v:1,ts:0,lvlPaid:1,credits:1500,earned:0,spent:0,races:0,wins:0,podiums:0,knock:0,dist:0,top:0,time:0,driftBest:0,driftLong:0,boosts:0,items:0,hits:0,spun:0,crashes:0,bumps:0,pits:0,
   spins:0,pity:0,tracks:{},cars:{},modes:{},paints:{},skins:{},look:{},own:{},feat:{},claimed:{},daily:{},camp:{},recent:[]}; }
 function careerFrom(c){ if(!c||typeof c!=='object'||c.v!==1) return null; const n=careerNew();
   for(const k in n) if(typeof c[k]===typeof n[k]&&Array.isArray(c[k])===Array.isArray(n[k])) n[k]=c[k];
   // careers from before the paint shop: car upgrades no longer exist, so what was spent on them comes back as credits
   if(typeof c.spins!=='number'&&n.claimed&&typeof n.claimed==='object') for(const id in n.claimed){ const m=MISSIONS.find(x=>x.id===id); if(m) n.spins+=MISSION_SPINS[m.t]; }
+  if(typeof c.lvlPaid!=='number') n.lvlPaid=levelOf(n).lv;      // careers from before levels: start counting from the level they have reached
   if(c.upg&&typeof c.upg==='object') for(const id in c.upg){ const u=c.upg[id]; if(u&&typeof u==='object') for(const k of ['eng','tur','tir','dri','nit']) for(let i=0;i<clamp(u[k]|0,0,5);i++) n.credits+=[600,1400,2600,4200,6500][i]; }
   return n; }
 const SAVE_MAX=6, saveKey=id=>'save.'+id, newId=()=>Math.random().toString(36).slice(2,8)+Math.random().toString(36).slice(2,5);
@@ -1380,10 +1428,10 @@ function careerFinish(){ if(G.awarded) return G.award; G.awarded=true;
   const cs=C.cars[p.spec.id]||(C.cars[p.spec.id]={races:0,wins:0}); cs.races++; if(win) cs.wins++;
   C.modes[m]=(C.modes[m]|0)+1;
   C.recent.unshift({t:TR.id,m,res,cr}); C.recent.length=Math.min(C.recent.length,8);
-  saveCareer(); lbSubmit();
+  saveCareer(); lbSubmit(); G.lvUp=levelCheck();
   return G.award={lines,total:cr}; }
-function awardHTML(){ const a=careerFinish(), pz=G.prize; G.prize='';
-  return (pz?`<p class="prize">Prize car won: ${esc(pz)}. It is in your garage.</p>`:'')+`<div class="award"><div class="awhead"><span>Credits earned</span><b>+${a.total.toLocaleString()} CR</b></div>${a.lines.map(l=>`<div><span>${esc(l[0])}</span><span>+${l[1].toLocaleString()}</span></div>`).join('')}<div class="awbal"><span>Balance</span><b>${Math.round(CAREER.credits).toLocaleString()} CR</b></div></div>`; }
+function awardHTML(){ const a=careerFinish(), pz=G.prize, lu=G.lvUp||[]; G.prize=''; G.lvUp=[];
+  return (lu.length?`<p class="prize">Level ${lu[lu.length-1]}! You get ${lu.length} spin${lu.length>1?'s':''} and ${lu.reduce((t,L)=>t+lvReward(L),0).toLocaleString()} CR.</p>`:'')+(pz?`<p class="prize">Prize car won: ${esc(pz)}. It is in your garage.</p>`:'')+`<div class="award"><div class="awhead"><span>Credits earned</span><b>+${a.total.toLocaleString()} CR</b></div>${a.lines.map(l=>`<div><span>${esc(l[0])}</span><span>+${l[1].toLocaleString()}</span></div>`).join('')}<div class="awbal"><span>Balance</span><b>${Math.round(CAREER.credits).toLocaleString()} CR</b></div></div>`; }
 
 /* ================= PARTICLES ================= */
 function makeParticles(max, additive){
@@ -2365,6 +2413,8 @@ function renderMenu(){
   if(NET.on){ back.style.visibility='visible'; back.textContent=menuStep===3?'Leave room':'Back to room';
     if(menuStep===3){ next.style.visibility=NET.host?'visible':'hidden'; next.textContent='Start race'; } else { next.style.visibility='visible'; next.textContent='Back to room'; } }
   else { back.textContent=menuStep===0||menuStep>=3?'Home':'Back'; back.style.visibility=menuStep===6?'hidden':'visible'; next.style.visibility=menuStep<=2?'visible':'hidden'; next.textContent=menuStep===2?(menuCamp>=0?'Start stage '+(menuCamp+1):'Start race'):'Next'; }
+  const lv=levelOf(CAREER), sp=CAREER.spins|0, nc=ownedCars().length; $('#lvNum').textContent=lv.lv; $('#lvBar').style.width=Math.round(lv.xp/lv.need*100)+'%'; $('#lvBtn').setAttribute('aria-label','Driver level '+lv.lv+', '+lv.xp+' of '+lv.need+' experience to the next level');
+  $('#carsChip').textContent=nc+(nc===1?' car':' cars'); $('#spinChip').textContent=sp+(sp===1?' spin':' spins'); $('#spinChip').classList.toggle('has',sp>0);
   const sl=slotOf(SAVES.cur); $('#saveBtn').textContent=sl?sl.name:'Careers'; $('#saveBtn').setAttribute('aria-label',(sl?'Playing as '+sl.name+'. ':'')+'Open your saved careers');
   renderHome(); renderMissions(); renderCamp();
   renderOnline(); renderCareer(); renderRanks();
@@ -2383,7 +2433,9 @@ function renderMenu(){
   $('#carDiff').hidden=NET.on||(menuCamp<0&&(md==='trial'||md==='rush'));      // online the host sets it; Time Trial and Checkpoint Rush have no rivals
   const c=CARS[sel.car]; $('#carName').textContent=c.name; $('#carTag').textContent=CAR_TIERS[c.tier]+' · '+c.tag;
   const pct=(v,a,b)=>Math.round(clamp((v-a)/(b-a),.06,1)*100);
-  $('#carStats').innerHTML=STATS.map(([lab,k,a,b])=>`<div class="stat"><span>${lab}</span><i><b style="width:${pct(c[k],a,b)}%"></b></i></div>`).join('');
+  const val=(k,v,a,b)=>k==='top'?Math.round(v*6)+' km/h':k==='mass'?Math.round(v*1350).toLocaleString()+' kg':pct(v,a,b)+' / 100';
+  $('#carStats').innerHTML=STATS.map(([lab,k,a,b])=>`<div class="stat"><span>${lab}</span><i><b style="width:${pct(c[k],a,b)}%"></b></i><em>${val(k,c[k],a,b)}</em></div>`).join('');
+  const rt=$('#carRate'); rt.className='rate t'+c.tier; rt.querySelector('b').textContent=carRating(c);
   const ch=$('#carChips'); ch.innerHTML=''; CARS.forEach((x,i)=>{ if(!ownCar(i)) return; const b=document.createElement('button'); b.type='button'; b.title=x.name; b.setAttribute('aria-label',x.name); b.setAttribute('aria-pressed',sel.car===i); b.style.background=hex(lookCol(lookOf(i))); b.onclick=()=>pickCar(i); ch.appendChild(b); });
   const laps= md==='drift'?'2 laps' : (md==='elim'||md==='bomb'||md==='rush')?'no lap limit' : md==='trial'?'3 laps' : md==='endure'?sel.endLaps+' laps' : sel.laps+' laps';
   const riv= (md==='trial'||md==='rush')?'no rivals' : md==='drift'?'3 cars of traffic' : (md==='bomb'?Math.max(3,sel.rivals):sel.rivals)+' rivals';
@@ -3079,8 +3131,11 @@ function renderMissions(){ const dot=$('#msDot'); if(dot) dot.hidden=!missionsRe
   document.querySelectorAll('#stepMissions button[data-key]').forEach(b=>b.onclick=()=>{ const ok=b.dataset.kind==='d'?claimDaily(b.dataset.key):claimMission(b.dataset.key); if(ok){ audioInit(); SFX.win(); fixCar(); renderMenu(); } }); }
 function renderCamp(){ if(menuStep!==8) return; const C=CAREER, nx=campNext(); if(campSel<0||campSel>nx) campSel=nx;
   const g=$('#cpGrid'); g.innerHTML='';
-  for(let i=0;i<CAMP_N;i++){ const fl=C.camp[i]|0, open=i<=nx, b=document.createElement('button'); b.type='button'; b.className='cnode'+(open?'':' lock')+(i%10===9?' fin':''); b.disabled=!open; b.setAttribute('aria-pressed',i===campSel);
+  const COLS=5; let flags=0;
+  for(let i=0;i<CAMP_N;i++){ const fl=C.camp[i]|0, open=i<=nx, b=document.createElement('button'), r=Math.floor(i/COLS), col=i%COLS; flags+=fl; b.type='button'; b.className='cnode'+(open?'':' lock')+(i%10===9?' fin':'')+(i===nx&&fl===0?' next':''); b.disabled=!open; b.setAttribute('aria-pressed',i===campSel);
+    b.style.gridRow=String(r+1); b.style.gridColumn=String((r%2?COLS-1-col:col)+1);      // a winding road: every other row runs back the other way
     b.setAttribute('aria-label','Stage '+(i+1)+(open?', '+fl+' of 3 flags':', locked')); b.innerHTML=`<b>${i+1}</b><span>${open?'<i class="'+(fl>0?'on':'')+'"></i><i class="'+(fl>1?'on':'')+'"></i><i class="'+(fl>2?'on':'')+'"></i>':'locked'}</span>`; b.onclick=()=>{ campSel=i; renderCamp(); }; g.appendChild(b); }
+  $('#cpFlags').textContent=flags+' / '+CAMP_N*3+' flags'; requestAnimationFrame(drawRoute);
   const t=campTrack(campSel), d=trackData(t), fl=C.camp[campSel]|0; CAMPT.forEach((x,k)=>{ if(x&&k!==campSel) x.data=null; });
   $('#cpTitle').textContent='Campaign · '+campCleared()+' of '+CAMP_N+' stages cleared';
   $('#cpName').textContent='Stage '+(campSel+1)+': '+t.name; const prize=campSel===24?' Clearing it wins the Night Specter.':campSel===CAMP_N-1?' Clearing it wins the Sideways One.':'';
@@ -3089,11 +3144,21 @@ function renderCamp(){ if(menuStep!==8) return; const C=CAREER, nx=campNext(); i
   $('#cpRivals').innerHTML=CAMP_RIVALS.map(r=>`<i><u style="background:${hex(lookCol(cleanLook(r.look,0)))}"></u>${r.name}</i>`).join('');
   seg($('#cpDiff'),[0,1,2,3,4],DIFFS.map(d=>d[0]),'campDiff'); const dk=DIFFS[sel.campDiff];
   const pc=Math.round((dk[1]/DIFFS[2][1]-1)*100); $('#cpDiffNote').textContent=dk[0]+': '+(pc?'rivals '+Math.abs(pc)+'% '+(pc>0?'faster':'slower')+' than on Normal, credits x'+dk[4]:'the standard pace and credits')+'. Flags count the same on every level, and you can change it before any stage.';
-  $('#cpCar').textContent='Your car: '+CARS[sel.car].name; }
+  const rec=campRec(campSel), mine=carRating(CARS[sel.car]); $('#cpRec').textContent=rec; $('#cpMine').textContent=mine; $('#cpMine').className=mine>=rec?'ok':'low';
+  $('#cpCar').textContent='Your car: '+CARS[sel.car].name+(mine>=rec?'':'. A faster car will make this stage easier.'); }
+// the lines that join the stages, drawn under the stage buttons: done in yellow, still to come dashed
+function drawRoute(){ const wrap=$('#cpRoute'), cv=$('#cpLines'); if(!wrap||menuStep!==8) return; const W=wrap.clientWidth, H=wrap.scrollHeight, dpr=Math.min(2,window.devicePixelRatio||1);
+  cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr); cv.style.width=W+'px'; cv.style.height=H+'px'; const g=cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H);
+  const wr=wrap.getBoundingClientRect(), pts=[...wrap.querySelectorAll('.cnode')].map(b=>{ const r=b.getBoundingClientRect(); return [r.left-wr.left+r.width/2, r.top-wr.top+r.height/2+wrap.scrollTop]; }), done=campNext();
+  g.lineCap='round'; g.lineJoin='round';
+  for(let i=1;i<pts.length;i++){ const a=pts[i-1], b=pts[i], on=i<=done; g.setLineDash(on?[]:[6,7]); g.strokeStyle=on?'rgba(255,194,26,.85)':'rgba(255,255,255,.22)'; g.lineWidth=on?5:3; g.beginPath(); g.moveTo(a[0],a[1]); g.lineTo(b[0],b[1]); g.stroke(); }
+  g.setLineDash([]); }
+if(window.ResizeObserver) setTimeout(()=>{ const r=$('#cpRoute'); if(r) new ResizeObserver(()=>{ if(menuStep===8) drawRoute(); }).observe(r); },0);
 function startCamp(i){ G.camp=clamp(i|0,0,CAMP_N-1); menuCamp=-1; startRace(); }
 function careerBoot(){
   $('#garageBtn').onclick=openShop; $('#pitGo').onclick=pitPick; $('#pitStay').onclick=pitClose;
-  $('#saveBtn').onclick=openTitle; $('#cSwitch').onclick=openTitle; $('#tiBack').onclick=backTitle;
+  $('#saveBtn').onclick=openTitle; $('#lvBtn').onclick=()=>go(4); $('#carsChip').onclick=()=>go(2); $('#spinChip').onclick=openCarShop; $('#shopBtn').onclick=openCarShop;
+  $('#csPaint').onclick=()=>{ $('#cshop').hidden=true; openShop(); }; $('#gaCars').onclick=()=>{ $('#garage').hidden=true; openCarShop(); }; $('#cSwitch').onclick=openTitle; $('#tiBack').onclick=backTitle;
   $('#cpGo').onclick=()=>startCamp(campSel); $('#cpCarBtn').onclick=()=>{ const i=campSel; go(2); menuCamp=i; renderMenu(); };
   $('#cshopBtn').onclick=openCarShop; $('#csClose').onclick=()=>{ $('#cshop').hidden=true; };
   $('#spGo').onclick=spinWheel; $('#spBuy1').onclick=()=>{ if(buySpins(1)){ audioInit(); SFX.pickup(); renderCarShop(); renderMenu(); } }; $('#spBuy5').onclick=()=>{ if(buySpins(5)){ audioInit(); SFX.pickup(); renderCarShop(); renderMenu(); } }; $('#stGo').onclick=starterDone;
@@ -3136,7 +3201,7 @@ sel.mode=clamp(sel.mode|0,0,MODES.length-1); sel.track=clamp(sel.track|0,0,TRACK
 if(TESTING){ if(!SAVES.cur){ const id=newId(); SAVES.list.push({id,name:NET.name,ts:0}); SAVES.cur=id; store.set('saves',SAVES); } if(!window.__swStarter) SALE_CARS.forEach(i=>{ CAREER.own[CARS[i].id]=1; }); }
 if(slotOf(SAVES.cur)) NET.name=cleanName(slotOf(SAVES.cur).name);
 fixCar(); setSound(AU.on); setShowCar(sel.car); netBoot(); careerBoot(); rmInit(); cloudInit(); renderMenu(); if(!TESTING||window.__swStarter) openTitle(); applyQuality(); requestAnimationFrame(frame);
-window.__sw={get CAREER(){return CAREER;},get AU(){return AU;},ENG_KIND,ENG,engLoop,engUpdate,leaderBut,pityLeft,spinCar,buySpins,rollCar,spinWheel,SPIN_ODDS,openTitle,backTitle,campTrack,startCamp,trackData,CAMP_RIVALS,MISSIONS,dailyNow,claimMission,claimDaily,missionsReady,go,get SAVES(){return SAVES;},ownedCars,careerCreate,careerOpen,DIFFS,LB,PROFILE,RM,CLOUD,PIT,CARS,TRACKS,MODES,SKINS,PAINTS,lookOf,setLook,shopStock,buyItem,openShop,G,sel,Q,NET,startRace,simulate,applyQuality,useItem,netStartRaceHost,ff(sec){ for(let i=0;i<sec*60;i++) simulate(1/60); },get T(){return T;},get scene(){return scene;},debug:{boxes:()=>boxes.length,oils:()=>oils.length,missiles:()=>missiles.length,list:()=>missiles}};
+window.__sw={get CAREER(){return CAREER;},levelOf,levelCheck,carRating,campRec,get AU(){return AU;},ENG_KIND,ENG,engLoop,engUpdate,leaderBut,pityLeft,spinCar,buySpins,rollCar,spinWheel,SPIN_ODDS,openTitle,backTitle,campTrack,startCamp,trackData,CAMP_RIVALS,MISSIONS,dailyNow,claimMission,claimDaily,missionsReady,go,get SAVES(){return SAVES;},ownedCars,careerCreate,careerOpen,DIFFS,LB,PROFILE,RM,CLOUD,PIT,CARS,TRACKS,MODES,SKINS,PAINTS,lookOf,setLook,shopStock,buyItem,openShop,G,sel,Q,NET,startRace,simulate,applyQuality,useItem,netStartRaceHost,ff(sec){ for(let i=0;i<sec*60;i++) simulate(1/60); },get T(){return T;},get scene(){return scene;},debug:{boxes:()=>boxes.length,oils:()=>oils.length,missiles:()=>missiles.length,list:()=>missiles}};
 })();
 </script>
 
