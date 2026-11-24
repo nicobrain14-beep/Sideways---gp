@@ -1178,7 +1178,7 @@ function renderWorld(sc,cm,k){
   if(!POST.main) return;
   cm.layers.set(0); cm.layers.enable(1); cm.layers.enable(2);
   renderer.setRenderTarget(POST.main); renderer.autoClear=true; renderer.shadowMap.needsUpdate=sc!==menuScene||GAR.shadowDirty; if(sc===menuScene) GAR.shadowDirty=false; renderer.render(sc,cm);
-  const glow=Q.level>0&&POST.rt;
+  const glow=Q.level>0&&POST.rt&&k>0;
   if(glow){
     const bg=sc.background; sc.background=null; renderer.setClearColor(0x000000,1);
     renderer.setRenderTarget(POST.rt); sc.overrideMaterial=POST.black; cm.layers.set(0); renderer.render(sc,cm);
@@ -1260,7 +1260,7 @@ const engSilence = () => { const e=AU.eng; if(!e) return; const t=AU.ctx.current
 // revs from road speed through six gears; shifts up near the redline and down when the revs fall away
 const GEAR_TOP=[.19,.33,.48,.63,.8,1.02];
 function engUpdate(p,dt){ const e=AU.eng, ctx=AU.ctx; if(!e||!ctx) return; const t=ctx.currentTime; engStart(p.spec.id);
-  const on=G.state==='race'||G.state==='countdown', th=on?(G.state==='countdown'?(keys.up?1:0):p.ctrl.th):0, sN=clamp(p.speed/(p.spec.top*G.speedMul*1.05),0,1.25), boost=p.boostT>0;
+  const on=G.state==='race'||G.state==='countdown'||G.state==='world', th=on?(G.state==='countdown'?(keys.up?1:0):p.ctrl.th):0, sN=clamp(p.speed/(p.spec.top*G.speedMul*1.05),0,1.25), boost=p.boostT>0;
   if(e.kind==='ev'){ const f=70+sN*900; e.ew.frequency.setTargetAtTime(f,t,.05); e.ew2.frequency.setTargetAtTime(f*2.02,t,.05); e.eg.gain.setTargetAtTime(on?.025+.05*th*(.3+sN):0,t,.06);
     e.g.gain.setTargetAtTime(0,t,.05); e.tg.gain.setTargetAtTime(on?.015*sN:0,t,.1); e.tb.frequency.setTargetAtTime(900+sN*1600,t,.1); }
   else { const P=ENG[e.kind], idle=850, red=P.red;
@@ -1949,7 +1949,8 @@ function openTune(tab){ if(G.state!=='menu'||NET.on||TUNE.on) return; const own=
 function closeTune(){ if(!TUNE.on) return; TUNE.on=false; TUNE.pv=null; TUNE.look=null; const menu=$('#menu'), tu=$('#tune');
   tu.classList.remove('enter'); tu.classList.add('leave'); setTimeout(()=>{ if(!TUNE.on){ tu.hidden=true; tu.classList.remove('leave'); } },reduceMotion?0:170);
   menu.hidden=false; menu.classList.add('fade'); void menu.offsetWidth; menu.classList.remove('fade');
-  RIG.drift=true; RIG.base=''; setShowCar(sel.car); renderMenu(); }
+  RIG.drift=true; RIG.base=''; setShowCar(sel.car); renderMenu();
+  if(window.SGPWorld&&SGPWorld.returnAfterTune){ SGPWorld.returnAfterTune=false; menu.hidden=true; setTimeout(()=>SGPWorld.enter(),reduceMotion?0:180); } }
 function tuneCar(dir){ const own=ownedCars(); if(own.length<2) return; const k=own.indexOf(TUNE.ci); TUNE.ci=own[(k+dir+own.length)%own.length]; TUNE.pv=null;
   sel.car=TUNE.ci; store.set('car',sel.car); TUNE.rateShown=carRating(tunedSpec(TUNE.ci)); tuneShow(); renderTune(true); if(RIG.shot!=='free') garShot(RIG.shot,RIG.opt); }
 function tuneTab(tab){ if(tab===TUNE.tab) return; const hadPv=!!TUNE.pv; TUNE.tab=tab; TUNE.pv=null; if(hadPv) tuneShow(); renderTune(true); garShot(TABS.find(t=>t[0]===tab)[2]); }
@@ -2049,7 +2050,7 @@ function levelOf(C){ let xp=xpOf(C), lv=1, need=400; while(xp>=need&&lv<99){ xp-
 const lvReward = L => 500*L;
 function levelCheck(){ const C=CAREER, L=levelOf(C).lv, got=[]; while((C.lvlPaid|0)<L){ C.lvlPaid=(C.lvlPaid|0)+1; const cr=lvReward(C.lvlPaid); C.credits+=cr; C.spins=(C.spins|0)+1; got.push(C.lvlPaid); } if(got.length) saveCareer(); return got; }
 function careerNew(){ return {v:1,ts:0,lvlPaid:1,credits:1500,earned:0,spent:0,races:0,wins:0,podiums:0,knock:0,dist:0,top:0,time:0,driftBest:0,driftLong:0,boosts:0,items:0,hits:0,spun:0,crashes:0,bumps:0,pits:0,
-  spins:0,pity:0,tracks:{},cars:{},modes:{},paints:{},skins:{},look:{},own:{},feat:{},claimed:{},daily:{},camp:{},recent:[],tune:{}}; }
+  spins:0,pity:0,tracks:{},cars:{},modes:{},paints:{},skins:{},look:{},own:{},feat:{},claimed:{},daily:{},camp:{},recent:[],tune:{},world:{}}; }
 function careerFrom(c){ if(!c||typeof c!=='object'||c.v!==1) return null; const n=careerNew();
   for(const k in n) if(typeof c[k]===typeof n[k]&&Array.isArray(c[k])===Array.isArray(n[k])) n[k]=c[k];
   // careers from before the paint shop: car upgrades no longer exist, so what was spent on them comes back as credits
@@ -2872,7 +2873,8 @@ function showResults(){
   $('#pit').hidden=true; $('#resTitle').textContent=title; $('#resSub').textContent=sub; $('#resBody').innerHTML=body; ab.textContent=again; $('#results').hidden=false; $('#touch').hidden=true;
 }
 function nextRace(){ if(G.online){ if(NET.host) netStartRaceHost(); return; } if(G.camp>=0){ if(G.campGo){ G.camp++; G.campGo=false; } startRace(); return; } const t=G.tour; if(t&&t.scored){ if(t.round<TOUR.length-1) t.round++; else G.tour=null; } startRace(); }
-function toMenu(){ teardownRace(); G.tour=null; G.camp=-1; $('#pit').hidden=true; G.state='menu'; G.paused=false; G.online=false; G.menuOpen=false; $('#hud').hidden=true; $('#touch').hidden=true; $('#results').hidden=true; $('#pause').hidden=true; $('#menu').hidden=false; engSilence(); GAR.dirty=true; garShot('intro',null,true); RIG.base=''; renderMenu(); }
+function toMenu(){ teardownRace(); G.tour=null; G.camp=-1; $('#pit').hidden=true; G.state='menu'; G.paused=false; G.online=false; G.menuOpen=false; $('#hud').hidden=true; $('#touch').hidden=true; $('#results').hidden=true; $('#pause').hidden=true; $('#menu').hidden=false; engSilence(); GAR.dirty=true; garShot('intro',null,true); RIG.base=''; renderMenu();
+  if(window.SGPWorld&&SGPWorld.returnAfterRace&&!NET.on){ SGPWorld.returnAfterRace=false; setTimeout(()=>SGPWorld.enter(),0); } }
 function setPaused(v){ if(G.state==='menu'||!$('#results').hidden) return;
   // online the race keeps going for everyone else, so the menu only takes your hands off the wheel
   if(G.online) G.menuOpen=v; else G.paused=v; $('#pause').hidden=!v;
@@ -3081,6 +3083,7 @@ function frame(now){
   if(!window.__swNoAdapt&&!G.paused&&!document.hidden){
     if(ftAvg>19.5){ fastT=0; slowT+=dt; if(slowT>1.2&&prScale>.56){ prScale=Math.max(.55,prScale-.15); slowT=0; setPR(); } }
     else { slowT=0; if(ftAvg<17.6&&prScale<1&&upTries<2){ fastT+=dt; if(fastT>12){ fastT=0; upTries++; prScale=Math.min(1,prScale+.15); setPR(); } } } }
+  if(G.state==='world'&&window.SGPWorld){ SGPWorld.frame(dt,raw); return; }
   if(G.state==='menu'){ garFrame(dt); return; }
   if(!G.paused){ const n=dt>1/70?2:1; for(let i=0;i<n;i++) simulate(dt/n);
     if(scene){ updateVisuals(dt); drawHUD(dt); } }
@@ -3092,7 +3095,7 @@ function seg(el,vals,labels,key){ el.innerHTML=''; vals.forEach((v,i)=>{ const b
 function renderMenu(){
   garMenuShot();
   const sec=menuStep<=2?0:menuStep;
-  document.querySelectorAll('.steps button').forEach(b=>{ const st=+b.dataset.step; if(st===sec) b.setAttribute('aria-current','step'); else b.removeAttribute('aria-current'); b.hidden=NET.on&&st!==3&&st!==4&&st!==5; });
+  const island=!!window.SGPWorld; document.querySelectorAll('.steps button').forEach(b=>{ const st=+b.dataset.step; if(st===sec) b.setAttribute('aria-current','step'); else b.removeAttribute('aria-current'); b.hidden=(NET.on&&st!==3&&st!==4&&st!==5)||(island&&(st===0||st===8)); });
   [['#stepMode',0],['#stepTrack',1],['#stepCar',2],['#stepOnline',3],['#stepCareer',4],['#stepRanks',5],['#stepHome',6],['#stepMissions',7],['#stepCamp',8]].forEach(([id,k])=>{ $(id).hidden=menuStep!==k; });
   const back=$('#backBtn'), next=$('#nextBtn');
   if(NET.on){ back.style.visibility='visible'; back.textContent=menuStep===3?'Leave room':'Back to room';
@@ -3751,7 +3754,8 @@ function renderTitle(){ const el=$('#tiList'); el.innerHTML=SAVES.list.length?''
 function openTitle(){ if(G.state!=='menu') return; renderTitle(); $('#title').hidden=false; }
 function closeTitle(){ $('#title').hidden=true; if(needStarter()) openStarter(); else go(6); }
 // leave the careers sheet without changing anything
-function backTitle(){ if(!slotOf(SAVES.cur)) return; $('#title').hidden=true; if(needStarter()) openStarter(); }
+function backTitle(){ if(!slotOf(SAVES.cur)) return; $('#title').hidden=true; if(needStarter()) openStarter(); else toWorld(); }
+function toWorld(){ if(!TESTING&&window.SGPWorld&&!SGPWorld.on&&G.state==='menu'&&!NET.on) SGPWorld.enter(); }
 let stPick=[];
 function openStarter(){ stPick=[]; renderStarter(); $('#starter').hidden=false; }
 function renderStarter(){ const el=$('#stGrid'); el.innerHTML='';
@@ -3759,7 +3763,7 @@ function renderStarter(){ const el=$('#stGrid'); el.innerHTML='';
     b.innerHTML=`<canvas width="168" height="76" aria-hidden="true"></canvas><h3>${c.name}</h3><p class="mini">${Math.round(c.top*6)} km/h · ${c.tag}</p>`; carThumb(b.querySelector('canvas'),'',c.color,c.accent);
     b.onclick=()=>{ const k=stPick.indexOf(i); if(k>=0) stPick.splice(k,1); else if(stPick.length<5) stPick.push(i); renderStarter(); }; el.appendChild(b); });
   const g=$('#stGo'); g.disabled=stPick.length!==5; g.textContent=stPick.length===5?'Start with these five':'Choose '+(5-stPick.length)+' more'; }
-function starterDone(){ if(stPick.length!==5) return; stPick.forEach(i=>{ CAREER.own[CARS[i].id]=1; }); sel.car=stPick[0]; store.set('car',sel.car); saveCareer(); $('#starter').hidden=true; setShowCar(sel.car); go(6); }
+function starterDone(){ if(stPick.length!==5) return; stPick.forEach(i=>{ CAREER.own[CARS[i].id]=1; }); sel.car=stPick[0]; store.set('car',sel.car); saveCareer(); $('#starter').hidden=true; setShowCar(sel.car); go(6); toWorld(); }
 let cshopTick=0, spinning=false, spinLast=null;
 // the reel: shows a car (or a "?" before the first spin) on the big card
 function reelShow(i){ const cv=$('#spCar'), card=$('#spCard'), c=i==null?null:CARS[i];
@@ -3792,6 +3796,7 @@ function openCarShop(){ spinLast=null; renderCarShop(); $('#cshop').hidden=false
 let campSel=-1, menuCamp=-1;
 function renderHome(){ if(menuStep!==6) return; const C=CAREER, nx=campNext(), done=campCleared(), ready=missionsReady(), sk=shopStock(), sl=slotOf(SAVES.cur), sp=C.spins|0;
   const tiles=[
+    ['world','Back to the island','Drive anywhere: every race is out on the roads','The city, the coast, forests, snowy peaks, the cherry valley and the desert. Races, the Arena and the campaign are on the map.'],
     ['camp','Campaign',done>=CAMP_N?'All '+CAMP_N+' stages cleared':'Stage '+(nx+1)+' of '+CAMP_N+': '+campTrack(nx).name+' · '+DIFFS[sel.campDiff][0],'Fifty long circuits you can only drive here, against the same ten rivals.'],
     ['race','Quick race',MODES[sel.mode].name+' on '+TRACKS[sel.track].name+' · '+DIFFS[sel.diff][0],'Any mode, any open circuit, 1 to 11 AI rivals, five difficulty levels.'],
     ['online','Online','Race friends','Open a room or join one with a code.'],
@@ -3803,8 +3808,8 @@ function renderHome(){ if(menuStep!==6) return; const C=CAREER, nx=campNext(), d
     ['ranks','Leaderboard','Top drivers and lap records',''],
     ['saves','Careers',sl?'Playing as '+sl.name:'No career yet','Switch to another saved career or start a new one.']];
   const el=$('#homeGrid'); el.innerHTML='';
-  tiles.forEach(([k,name,line,blurb])=>{ const b=document.createElement('button'); b.type='button'; b.className='card home'+(k==='camp'||k==='race'?' big':''); b.innerHTML=`<span class="tag">${esc(line)}</span><h3>${name}${(k==='missions'&&ready)||(k==='cars'&&sp)?'<i class="dot"></i>':''}</h3><p>${blurb}</p>`;
-    b.onclick=()=>{ if(k==='camp') go(8); else if(k==='race') go(0); else if(k==='online') go(3); else if(k==='missions') go(7); else if(k==='cars') openCarShop(); else if(k==='paint') openShop(); else if(k==='garage') openTune('paint'); else if(k==='career') go(4); else if(k==='ranks') go(5); else openTitle(); }; el.appendChild(b); }); }
+  (window.SGPWorld?tiles.filter(t=>t[0]!=='camp'&&t[0]!=='race'):tiles).forEach(([k,name,line,blurb])=>{ const b=document.createElement('button'); b.type='button'; b.className='card home'+(k==='camp'||k==='race'||k==='world'?' big':''); b.innerHTML=`<span class="tag">${esc(line)}</span><h3>${name}${(k==='missions'&&ready)||(k==='cars'&&sp)?'<i class="dot"></i>':''}</h3><p>${blurb}</p>`;
+    b.onclick=()=>{ if(k==='world'){ if(window.SGPWorld) SGPWorld.enter(); return; } if(k==='camp') go(8); else if(k==='race') go(0); else if(k==='online') go(3); else if(k==='missions') go(7); else if(k==='cars') openCarShop(); else if(k==='paint') openShop(); else if(k==='garage') openTune('paint'); else if(k==='career') go(4); else if(k==='ranks') go(5); else openTitle(); }; el.appendChild(b); }); }
 function renderMissions(){ const dot=$('#msDot'); if(dot) dot.hidden=!missionsReady(); if(menuStep!==7) return; const C=CAREER, dn=dailyNow();
   const row=(name,v,n,reward,state,key,kind)=>`<div class="mrow${state==='got'?' got':''}"><b>${name}</b><span class="mbar"><u style="width:${Math.round(clamp(v/n,0,1)*100)}%"></u></span><small>${Math.min(v,n).toLocaleString()} / ${n.toLocaleString()} · ${reward}</small>`+
     (state==='got'?'<span class="own">Claimed</span>':`<button type="button" class="btn" data-kind="${kind}" data-key="${key}" ${state==='ready'?'':'disabled'}>Claim</button>`)+'</div>';
@@ -3861,6 +3866,7 @@ addEventListener('keydown',e=>{
   const k=KEYMAP[e.code];
   if(e.target&&e.target.tagName==='INPUT') return;
   if(G.pit&&G.pit.open){ pitKey(e); return; }
+  if(G.state==='world'&&window.SGPWorld){ if(k&&!SGPWorld.blocking()){ keys[k]=1; e.preventDefault(); if(touchMode){ touchMode=false; $('#touch').hidden=true; app.classList.remove('touchmode'); } } if(!e.repeat&&SGPWorld.key(e)) e.preventDefault(); return; }
   if(G.state==='menu'){ if(TUNE.on){ if(e.code==='Escape'&&$('#garage').hidden){ closeTune(); e.preventDefault(); } return; }
     if(e.target.tagName==='BUTTON'&&(e.code==='Space'||e.code==='Enter')) return;
     if(!$('#title').hidden){ if(e.code==='Escape') backTitle(); return; }
@@ -3887,10 +3893,14 @@ sel.mode=clamp(sel.mode|0,0,MODES.length-1); sel.track=clamp(sel.track|0,0,TRACK
 if(TESTING){ if(!SAVES.cur){ const id=newId(); SAVES.list.push({id,name:NET.name,ts:0}); SAVES.cur=id; store.set('saves',SAVES); } if(!window.__swStarter) SALE_CARS.forEach(i=>{ CAREER.own[CARS[i].id]=1; }); }
 if(slotOf(SAVES.cur)) NET.name=cleanName(slotOf(SAVES.cur).name);
 fixCar(); setSound(AU.on); setShowCar(sel.car); garShot('intro',null,true); canvas.addEventListener('webglcontextrestored',()=>{ GAR.dirty=true; }); netBoot(); careerBoot(); rmInit(); cloudInit(); modelsInit(); envInit(); renderMenu(); if(!TESTING||window.__swStarter) openTitle(); applyQuality(); requestAnimationFrame(frame);
+window.SGP={THREE,G,keys,CARS,get CAREER(){return CAREER;},sel,Q,renderer,POST,FX,renderWorld,get bufSize(){return bufSize;},tunedSpec,lookOf,buildCarMesh,stepCar,endDrift,boost,engUpdate,engSilence,audioInit,SFX,
+  makeParticles,makeSkid,setTR(v){ TR=v; },setT(v){ T=v; },DIFFS,SALE_CARS,aiLook,go,get TR(){return TR;},disposeTree,glowOn,rng,clamp,lerp,smooth,wrapPi,ENVS,ENV_OF,pmrem,toMenu,openTune,saveCareer,cvTex,TEX,reduceMotion,store,$,setSound,
+  get AU(){return AU;},get touchMode(){return touchMode;},get camMode(){return camMode;},set camMode(v){ camMode=v; },renderMenu,resize,HDR_RT,LK,SRGB,QN,applyQuality,setShowCar,garShot,RIG,GAR,get menuStep(){return menuStep;}};
 window.__sw={get cam(){return cam;},TUNE,openTune,closeTune,tuneTab,tunedSpec,tuneRec,KIT,UPG,packKit,unpackKit,renderTune,renderer,menuScene,menuCam,FX,POST,GAR,RIG,garShot,get showCar(){return showCar;},setShowCar,get CAREER(){return CAREER;},ENVS,MODELS,loadCarModel,levelOf,levelCheck,carRating,campRec,get AU(){return AU;},ENG_KIND,ENG,engLoop,engUpdate,leaderBut,pityLeft,spinCar,buySpins,rollCar,spinWheel,SPIN_ODDS,openTitle,backTitle,campTrack,startCamp,trackData,CAMP_RIVALS,MISSIONS,dailyNow,claimMission,claimDaily,missionsReady,go,get SAVES(){return SAVES;},ownedCars,careerCreate,careerOpen,DIFFS,LB,PROFILE,RM,CLOUD,PIT,CARS,TRACKS,MODES,SKINS,PAINTS,lookOf,setLook,shopStock,buyItem,openShop,G,sel,Q,NET,startRace,simulate,applyQuality,useItem,netStartRaceHost,ff(sec){ for(let i=0;i<sec*60;i++) simulate(1/60); },get T(){return T;},get scene(){return scene;},debug:{boxes:()=>boxes.length,oils:()=>oils.length,missiles:()=>missiles.length,list:()=>missiles}};
 })();
 </script>
 
+<script src="/world/world.js"></script>
 <noscript><p style="color:#f4f1e8;padding:24px">Sideways GP needs JavaScript and WebGL.</p></noscript>
 <script>
 if('serviceWorker' in navigator && location.protocol==='https:'){ addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{})); }

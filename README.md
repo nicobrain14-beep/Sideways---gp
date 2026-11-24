@@ -41,7 +41,17 @@ Ejecútalo dentro de esta carpeta y acepta las opciones por defecto.
 - **Volver a tus partidas.** El botón con tu nombre, arriba en todas las pantallas del menú (o **Switch career** en **Career**), abre la lista de partidas. **Back** la cierra sin cambiar nada.
 - **Estadísticas y Reset career.** La pantalla **Career** muestra tus números. Reset career borra la partida actual (hay que pulsarlo dos veces) y vuelves a elegir 5 coches.
 
-## Garaje y taller
+## Mundo abierto
+
+Al elegir tu partida apareces en la isla, ya no en un menú. Manejas libre por carreteras, ciudad, costa, bosque, montañas nevadas, el valle de cerezos con el castillo y el desierto.
+
+- **Carreras en la carretera:** cada salida tiene una columna de luz roja. Llegas, presionas **E** y corres contra 7 rivales: con vueltas en los circuitos o de punta a punta en los sprints. Al terminar ves los resultados y los créditos.
+- **Sideways Arena** (columna celeste, en el festival): los modos clásicos con power-ups, Endurance, Hot Potato, etc. **The Ten** (columna morada): la campaña de 50 etapas. Al terminar vuelves a la isla.
+- **Desafíos:** radares de velocidad, zonas de derrape y saltos, con 1 a 3 estrellas. La primera vez que ganas cada estrella te pagan créditos y se guarda tu récord.
+- **Tu garaje** (columna amarilla): entras con **E** para afinar el carro y vuelves a salir a la isla.
+- **Tráfico** en las carreteras: si chocas un carro, sale volando y luego vuelve a su carril.
+- **Teclas:** **M** mapa (toca un punto para trazar una ruta GPS), **R** volver a la carretera, **C** cámara, **Esc** pausa.
+
 
 Los menús están dentro de un garaje 3D: piso de concreto pulido que refleja el carro, paredes de lámina, repisas con cajas, cajas de equipo, lámparas de trabajo y luces en el techo que se reflejan en la pintura. Al cambiar de pantalla la cámara se mueve sola alrededor del carro; puedes **arrastrar** para mirarlo desde cualquier lado y **hacer zoom** con la rueda del ratón o pellizcando la pantalla.
 
